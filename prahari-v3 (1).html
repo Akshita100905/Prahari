@@ -1,0 +1,3127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>प्रhari – Your Safety, Our Priority</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800;900&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+/* ─────────────────────────────────────────────
+   VARIABLES
+───────────────────────────────────────────── */
+:root {
+  --blue:#1B4FD8; --blue-dk:#1239A6; --blue-md:#4A78E8;
+  --blue-lt:#E8EFFE; --blue-xl:#F3F6FF;
+  --sos:#E53E3E; --sos-dk:#C12828; --sos-glow:rgba(229,62,62,.3);
+  --green:#10B981; --amber:#F59E0B; --purple:#8B5CF6;
+  --rose:#F43F5E; --teal:#0D9488;
+  --bg:#EEF2FF; --card:#FFFFFF; --bdr:rgba(27,79,216,.1);
+  --t1:#0F1F5C; --t2:#4B5DAA; --t3:#8899CC;
+  --sh1:0 2px 14px rgba(27,79,216,.08);
+  --sh2:0 6px 30px rgba(27,79,216,.13);
+  --sh3:0 18px 56px rgba(27,79,216,.2);
+  --r:16px; --tr:.26s cubic-bezier(.4,0,.2,1);
+  --f:'Nunito',sans-serif; --fd:'Baloo 2',sans-serif;
+  --tbh:66px; --sbw:230px; --rpw:270px;
+}
+[data-theme="dark"] {
+  --bg:#080F2E; --card:#0F1A42; --bdr:rgba(74,120,232,.18);
+  --blue-lt:#131D52; --blue-xl:#0D1540;
+  --t1:#E8EFFE; --t2:#7A9BD8; --t3:#3A5A9A;
+  --sh1:0 2px 14px rgba(0,0,0,.5);
+  --sh2:0 6px 30px rgba(0,0,0,.6);
+  --sh3:0 18px 56px rgba(0,0,0,.7);
+}
+
+/* ─────────────────────────────────────────────
+   RESET & BASE
+───────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{font-family:var(--f);background:var(--bg);color:var(--t1);min-height:100dvh;overflow-x:hidden}
+button{font-family:var(--f);cursor:pointer}
+input,select{font-family:var(--f)}
+
+/* ─────────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:4px}
+
+/* ─────────────────────────────────────────────
+   CUSTOM VOICE COMMANDS STYLES
+───────────────────────────────────────────── */
+#ww-status-pill{position:fixed;bottom:90px;right:18px;z-index:500;display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--bdr);border-radius:30px;padding:8px 14px;box-shadow:var(--sh2);font-size:12px;font-weight:800;color:var(--t1);transition:var(--tr);cursor:pointer;opacity:0;pointer-events:none}
+#ww-status-pill.show{opacity:1;pointer-events:all}
+#ww-status-pill .ww-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;transition:var(--tr)}
+#ww-status-pill .ww-dot.idle{background:var(--t3)}
+#ww-status-pill .ww-dot.listening{background:var(--green);animation:blink 1.2s ease-in-out infinite}
+#ww-status-pill .ww-dot.triggered{background:var(--sos);animation:blink .4s ease-in-out infinite}
+.vc-phrase-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.vc-phrase-row{display:flex;align-items:center;gap:10px;background:var(--blue-xl);border:1.5px solid var(--bdr);border-radius:12px;padding:11px 14px}
+.vc-phrase-text{flex:1;font-size:13px;font-weight:800;color:var(--t1)}
+.vc-del-btn{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--bdr);background:var(--card);color:var(--t3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0}
+.vc-del-btn:hover{background:var(--sos);color:#fff;border-color:var(--sos)}
+.vc-add-row{display:flex;gap:8px;margin-bottom:8px}
+.vc-add-row input{flex:1;background:var(--card);border:1.5px solid var(--bdr);border-radius:10px;padding:10px 13px;font-size:13px;font-weight:700;color:var(--t1);outline:none;transition:var(--tr);font-family:var(--f)}
+.vc-add-row input:focus{border-color:var(--blue)}
+.vc-add-btn{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;transition:var(--tr);white-space:nowrap}
+.vc-add-btn:hover{background:var(--blue-dk)}
+.vc-info-box{background:var(--blue-xl);border-radius:14px;padding:14px;margin-bottom:16px}
+.vc-info-box p{font-size:12px;font-weight:700;color:var(--t2);line-height:1.65}
+.vc-test-btn{width:100%;padding:12px;background:linear-gradient(135deg,rgba(27,79,216,.12),rgba(74,120,232,.12));color:var(--blue);border:1.5px solid rgba(27,79,216,.25);border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:10px}
+.vc-test-btn:hover{background:var(--blue-lt)}
+.vc-test-btn.listening{background:rgba(229,62,62,.1);color:var(--sos);border-color:rgba(229,62,62,.3)}
+.vc-test-result{font-size:12px;font-weight:700;color:var(--t3);text-align:center;min-height:18px;margin-bottom:14px}
+
+/* ─────────────────────────────────────────────
+   LEAFLET MAP OVERRIDES
+───────────────────────────────────────────── */
+#home-map, #nav-map-leaflet {
+  width:100%; border-radius:12px; z-index:1;
+}
+#home-map { flex:1; min-height:300px; }
+#nav-map-leaflet { height:100%; min-height:460px; }
+.leaflet-container { font-family: var(--f) !important; }
+.leaflet-control-attribution { font-size:9px !important; }
+[data-theme="dark"] .leaflet-tile { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9); }
+[data-theme="dark"] .leaflet-marker-icon { filter: none; }
+
+/* ─────────────────────────────────────────────
+   UTILITIES
+───────────────────────────────────────────── */
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh1);transition:var(--tr)}
+.card-p{padding:20px}
+.card:hover{box-shadow:var(--sh2)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.4px}
+.bg{background:rgba(16,185,129,.12);color:var(--green)}
+.bb{background:var(--blue-lt);color:var(--blue)}
+.br{background:rgba(229,62,62,.1);color:var(--sos)}
+.ba{background:rgba(245,158,11,.12);color:var(--amber)}
+.av0{background:var(--blue)}.av1{background:var(--purple)}.av2{background:var(--rose)}.av3{background:var(--teal)}.av4{background:var(--amber)}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.4)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sosp{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes mpp{0%,100%{box-shadow:0 0 0 4px rgba(27,79,216,.2)}50%{box-shadow:0 0 0 12px rgba(27,79,216,.07)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes avb{0%,100%{transform:scaleY(.5);opacity:.5}50%{transform:scaleY(1);opacity:1}}
+.fi{animation:fadeup .35s cubic-bezier(.4,0,.2,1) both}
+.d1{animation-delay:.05s}.d2{animation-delay:.10s}.d3{animation-delay:.15s}.d4{animation-delay:.20s}.d5{animation-delay:.25s}
+
+/* ─────────────────────────────────────────────
+   LOGIN PAGE
+───────────────────────────────────────────── */
+#pg-login{min-height:100dvh;display:flex;flex-direction:column;background: #DC2424;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to left, #4A569D, #DC2424);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to left, #4A569D, #DC2424); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+
+}
+
+.ln-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 48px;border-bottom:1px solid rgba(255,255,255,.07);
+  position:sticky;top:0;z-index:10;background:rgba(0,0,0,.15);
+  backdrop-filter:blur(12px);flex-shrink:0;
+}
+.ln-brand{display:flex;align-items:center;gap:10px}
+.ln-brand img{width:36px;height:36px;object-fit:contain;border-radius:8px}
+.ln-brand span{font-family:var(--fd);font-size:22px;font-weight:900;color:#fff;letter-spacing:-.3px}
+
+.ln-body{flex:1;display:grid;grid-template-columns:1fr 480px;gap:0;position:relative;overflow:hidden}
+.ln-body::before,.ln-body::after{content:'';position:absolute;border-radius:50%;pointer-events:none}
+.ln-body::before{width:700px;height:700px;background:radial-gradient(circle,rgba(255,255,255,.05) 0%,transparent 70%);top:-200px;right:-100px}
+.ln-body::after{width:400px;height:400px;background:radial-gradient(circle,rgba(255,255,255,.04) 0%,transparent 70%);bottom:-120px;left:80px}
+
+.ln-hero{display:flex;flex-direction:column;justify-content:center;padding:60px 50px 60px 70px;position:relative;z-index:2}
+.ln-hero-logo{display:flex;align-items:center;gap:14px;margin-bottom:36px}
+.ln-hero-logo img{width:120px;height:150px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(0,0,0,.45));animation:float 3.5s ease-in-out infinite}
+.ln-hero-logo .aname{font-family:var(--fd);font-size:40px;font-weight:900;color:#fff;letter-spacing:-.5px}
+.ln-hero h1{font-family:var(--fd);font-size:clamp(26px,3.4vw,46px);font-weight:900;color:#fff;line-height:1.15;margin-bottom:16px}
+.ln-hero h1 span{color:rgba(255,255,255,.5)}
+.ln-hero>p{font-size:clamp(13px,1vw,15px);color:rgba(255,255,255,.6);font-weight:600;line-height:1.65;max-width:440px;margin-bottom:36px}
+.ln-feats{display:flex;flex-direction:column;gap:11px}
+.ln-feat{display:flex;align-items:center;gap:11px;font-size:13px;font-weight:700;color:rgba(255,255,255,.78)}
+.ln-fi{width:34px;height:34px;background:rgba(255,255,255,.12);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+
+.ln-form-wrap{display:flex;align-items:center;justify-content:center;padding:40px 50px 40px 30px;position:relative;z-index:2}
+.ln-card{background:rgba(255,255,255,.08);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,.14);border-radius:26px;padding:36px 30px;width:100%;max-width:400px;box-shadow:0 22px 60px rgba(0,0,0,.3)}
+.ln-card h2{font-family:var(--fd);font-size:24px;font-weight:800;color:#fff;margin-bottom:5px}
+.ln-card>p{font-size:13px;color:rgba(255,255,255,.47);font-weight:600;margin-bottom:24px}
+.fgrp{margin-bottom:15px}
+.fgrp label{display:block;font-size:11px;font-weight:800;color:rgba(255,255,255,.55);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px}
+.fw{position:relative}
+.fw .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;opacity:.4}
+.fw input{width:100%;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.13);border-radius:12px;padding:13px 14px 13px 40px;color:#fff;font-size:14px;font-weight:600;outline:none;transition:var(--tr)}
+.fw input::placeholder{color:rgba(255,255,255,.26)}
+.fw input:focus{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12)}
+.ln-opts{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:12px;font-weight:700}
+.ln-opts label{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.5);cursor:pointer}
+.ln-opts a{color:rgba(255,255,255,.65);text-decoration:none}
+.btn-login{width:100%;padding:14px;background:#fff;color:var(--blue);border:none;border-radius:13px;font-size:15px;font-weight:900;cursor:pointer;transition:var(--tr);box-shadow:0 6px 22px rgba(0,0,0,.22)}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(0,0,0,.3)}
+.divid{display:flex;align-items:center;gap:10px;margin:16px 0;color:rgba(255,255,255,.22);font-size:12px}
+.divid::before,.divid::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1)}
+.btn-google{width:100%;padding:12px;background:#1B4FD8;color:#fff;border:1px solid rgba(255,255,255,.16);border-radius:13px;font-size:13px;font-weight:700;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-google:hover{background:rgba(255,255,255,.08)}
+.sos-strip{margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);text-align:center}
+.sos-strip p{font-size:11px;color:rgba(255,255,255,.33);margin-bottom:9px;font-weight:600}
+.btn100{display:inline-flex;align-items:center;gap:7px;background:var(--sos);color:#fff;border:none;border-radius:30px;padding:11px 26px;font-size:14px;font-weight:800;cursor:pointer;transition:var(--tr);box-shadow:0 6px 20px var(--sos-glow)}
+.btn100:hover{transform:scale(1.06)}
+
+.ln-footer{background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:center;align-items:center;gap:40px;padding:13px 48px;flex-wrap:wrap;flex-shrink:0;position:relative;z-index:2}
+.lnf-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:rgba(255,255,255,.35)}
+
+/* ─────────────────────────────────────────────
+   APP SHELL
+───────────────────────────────────────────── */
+#pg-app{display:none;min-height:100dvh;flex-direction:column}
+#pg-app.vis{display:flex}
+
+/* Top bar */
+.topbar{
+  height:var(--tbh);background:var(--card);border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;box-shadow:var(--sh1);
+  position:sticky;top:0;z-index:100;flex-shrink:0;
+}
+.tb-l{display:flex;align-items:center;gap:10px}
+.tb-logo{width:38px;height:38px;object-fit:contain;border-radius:8px;flex-shrink:0}
+.tb-name{font-family:var(--fd);font-size:22px;font-weight:900;color:var(--blue);white-space:nowrap}
+.tb-nav{display:flex;align-items:center;gap:3px}
+.tnb{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:none;background:transparent;color:var(--t2);font-size:13px;font-weight:700;transition:var(--tr);white-space:nowrap}
+.tnb svg{width:16px;height:16px;flex-shrink:0}
+.tnb:hover{background:var(--blue-lt);color:var(--blue)}
+.tnb.act{background:var(--blue-lt);color:var(--blue)}
+.tb-r{display:flex;align-items:center;gap:9px}
+.sp{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--green);background:rgba(16,185,129,.1);padding:5px 11px;border-radius:20px;white-space:nowrap}
+.sp::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 1.8s ease-in-out infinite;flex-shrink:0}
+.icb{width:37px;height:37px;border-radius:50%;border:none;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:15px;transition:var(--tr);flex-shrink:0}
+.icb:hover{background:var(--blue);color:#fff;transform:scale(1.08)}
+.btn-sos-hd{display:flex;align-items:center;gap:7px;background:var(--sos);color:#fff;border:none;border-radius:22px;padding:10px 18px;font-size:13px;font-weight:800;transition:var(--tr);box-shadow:0 4px 14px var(--sos-glow);white-space:nowrap}
+.btn-sos-hd:hover{transform:scale(1.05);box-shadow:0 6px 22px var(--sos-glow)}
+.hamburger{display:none;width:37px;height:37px;border-radius:50%;border:none;background:var(--blue-lt);color:var(--blue);align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+
+/* Offline banner */
+.off-bar{background:var(--amber);color:#fff;font-size:12px;font-weight:700;padding:8px 20px;display:none;align-items:center;justify-content:center;gap:7px;flex-shrink:0}
+.off-bar.show{display:flex}
+
+/* Body layout */
+.app-body{flex:1;display:flex;min-height:0;overflow:hidden}
+
+/* Sidebar */
+.sidebar{
+  width:var(--sbw);background:var(--card);border-right:1px solid var(--bdr);
+  display:flex;flex-direction:column;padding:16px 10px;flex-shrink:0;
+  overflow-y:auto;position:sticky;top:var(--tbh);
+  height:calc(100dvh - var(--tbh));box-shadow:var(--sh1);
+}
+.sb-sec{font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1.2px;text-transform:uppercase;padding:0 10px;margin:18px 0 7px}
+.sb-sec:first-child{margin-top:0}
+.sb-lnk{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;border:none;background:transparent;color:var(--t2);font-size:13px;font-weight:700;transition:var(--tr);width:100%;text-align:left;margin-bottom:2px}
+.sb-lnk svg{width:17px;height:17px;flex-shrink:0}
+.sb-lnk:hover{background:var(--blue-lt);color:var(--blue)}
+.sb-lnk.act{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(27,79,216,.32)}
+.sb-badge{margin-left:auto;background:var(--sos);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px}
+.sb-sos{margin-top:auto;padding-top:14px;border-top:1px solid var(--bdr)}
+.btn-sb-sos{width:100%;padding:13px;background:linear-gradient(135deg,var(--sos),var(--sos-dk));color:#fff;border:none;border-radius:13px;font-size:14px;font-weight:900;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 6px 18px var(--sos-glow)}
+.btn-sb-sos:hover{transform:translateY(-2px);box-shadow:0 10px 26px var(--sos-glow)}
+
+/* Main content */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;padding:26px 28px;min-width:0}
+
+/* Right panel */
+.rp{width:var(--rpw);background:var(--card);border-left:1px solid var(--bdr);padding:18px 14px;flex-shrink:0;display:flex;flex-direction:column;gap:14px;overflow-y:auto;position:sticky;top:var(--tbh);height:calc(100dvh - var(--tbh))}
+
+/* ─────────────────────────────────────────────
+   VIEW SYSTEM
+───────────────────────────────────────────── */
+.view{display:none}
+.view.act{display:block}
+.pg-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.pg-hdr h1{font-family:var(--fd);font-size:clamp(20px,2.2vw,26px);font-weight:900;color:var(--t1);line-height:1.2}
+.pg-hdr p{font-size:13px;color:var(--t3);margin-top:4px;font-weight:600}
+.ct{font-size:14px;font-weight:800;color:var(--t1);margin-bottom:13px;display:flex;align-items:center;justify-content:space-between}
+
+/* ─────────────────────────────────────────────
+   HOME VIEW
+───────────────────────────────────────────── */
+.home-grid{display:grid;grid-template-columns:minmax(260px,1fr) minmax(260px,1.4fr);gap:18px}
+.wel{grid-column:1/-1;background:linear-gradient(135deg,var(--blue),var(--blue-md));border-radius:var(--r);padding:22px 26px;color:#fff;position:relative;overflow:hidden;border:none}
+.wel::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:rgba(255,255,255,.06);border-radius:50%}
+.wel h2{font-family:var(--fd);font-size:clamp(18px,2vw,24px);font-weight:900;margin-bottom:5px}
+.wel p{font-size:13px;opacity:.75;font-weight:600}
+
+/* SOS */
+.sos-card{display:flex;flex-direction:column;align-items:center;padding:22px 18px}
+.sos-outer{width:178px;height:178px;border-radius:50%;background:rgba(229,62,62,.07);display:flex;align-items:center;justify-content:center;animation:sosp 2.8s ease-in-out infinite}
+.sos-inn{width:144px;height:144px;border-radius:50%;background:rgba(229,62,62,.13);display:flex;align-items:center;justify-content:center}
+.sos-btn{width:112px;height:112px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FF6565,var(--sos) 60%,var(--sos-dk));border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(229,62,62,.5);transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;user-select:none;-webkit-user-select:none}
+.sos-btn::before{content:'';position:absolute;top:15%;left:15%;width:32%;height:22%;background:rgba(255,255,255,.28);border-radius:50%;transform:rotate(-30deg);pointer-events:none}
+.sos-btn.pressing{transform:scale(.92);box-shadow:0 4px 14px rgba(229,62,62,.4)}
+.sos-btn span{font-family:var(--fd);font-size:28px;font-weight:900;color:#fff;line-height:1}
+.sos-btn small{font-size:10px;color:rgba(255,255,255,.78);font-weight:700;margin-top:2px}
+.sos-hint{margin-top:11px;font-size:11px;font-weight:700;color:var(--t3);text-align:center}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;width:100%}
+.stat{background:var(--blue-xl);border-radius:11px;padding:10px 6px;text-align:center}
+.stat .si{font-size:17px;margin-bottom:3px}.stat .sl{font-size:9px;font-weight:800;color:var(--t3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}.stat .sv{font-size:11px;font-weight:800;color:var(--t1)}
+
+/* Map */
+.map-card{grid-column:2;grid-row:2/4;display:flex;flex-direction:column}
+.map-card .ct{flex-shrink:0}
+.map-box{background:linear-gradient(135deg,#C8D6F8,#DCEAF8);border-radius:12px;min-height:250px;height:100%;position:relative;overflow:hidden}
+[data-theme="dark"] .map-box{background:linear-gradient(135deg,#0E1D58,#0A1440)}
+.mgrid{position:absolute;inset:0;background-image:linear-gradient(rgba(27,79,216,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(27,79,216,.07) 1px,transparent 1px);background-size:26px 26px}
+.map-you{position:absolute;top:55%;left:48%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center}
+.map-dot{width:16px;height:16px;background:var(--blue);border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 6px rgba(27,79,216,.2);animation:mpp 1.8s ease-in-out infinite}
+.map-lbl{background:var(--blue);color:#fff;font-size:9px;font-weight:800;padding:3px 7px;border-radius:8px;margin-top:6px;white-space:nowrap}
+.api-note{position:absolute;bottom:10px;left:10px;background:var(--card);font-size:9px;font-weight:800;color:var(--t3);padding:3px 8px;border-radius:7px;box-shadow:var(--sh1)}
+
+/* Helplines */
+.hl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hl-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;background:var(--blue-xl);border:none;border-radius:12px;transition:var(--tr);border-top:3px solid transparent}
+.hl-btn:hover{transform:translateY(-3px);box-shadow:var(--sh2)}
+.hl-btn .hli{font-size:20px}.hl-btn .hln{font-size:14px;font-weight:900;color:var(--t1)}.hl-btn .hll{font-size:9px;font-weight:700;color:var(--t3);text-align:center;line-height:1.3}
+.hl-btn.pol{border-top-color:var(--blue)}.hl-btn.wom{border-top-color:#E879F9}.hl-btn.amb{border-top-color:var(--sos)}.hl-btn.fir{border-top-color:var(--amber)}
+
+/* ─────────────────────────────────────────────
+   SOS ACTIVE VIEW
+───────────────────────────────────────────── */
+.sos-pg{background:linear-gradient(155deg,#2A0808,#7A1010,#C41E1E);border-radius:20px;padding:36px 26px;display:flex;flex-direction:column;align-items:center;gap:22px;color:#fff;min-height:72vh}
+.sos-pg-hd{text-align:center}
+.sos-pg-hd h2{font-family:var(--fd);font-size:clamp(24px,3vw,34px);font-weight:900;display:flex;align-items:center;justify-content:center;gap:9px}
+.sos-pg-hd p{font-size:15px;opacity:.74;margin-top:7px;font-weight:600}
+.cdring{position:relative;width:170px;height:170px}
+.cdring svg{transform:rotate(-90deg);width:170px;height:170px}
+.cdring circle{fill:none;stroke-width:10}
+.ring-bg{stroke:rgba(255,255,255,.15)}
+.ring-p{stroke:#fff;stroke-linecap:round;stroke-dasharray:471;stroke-dashoffset:0;transition:stroke-dashoffset 0.9s linear}
+.cdnum{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cdnum span{font-family:var(--fd);font-size:56px;font-weight:900;line-height:1}
+.cdnum small{font-size:12px;opacity:.65;font-weight:700}
+.sos-irow{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:700px}
+.sos-sbox{background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border-radius:18px;padding:17px;display:flex;flex-direction:column;gap:9px}
+.si{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:rgba(255,255,255,.9)}
+.sid{width:9px;height:9px;border-radius:50%;flex-shrink:0;animation:blink 1.4s ease-in-out infinite}
+.sid.on{background:var(--green)}.sid.pd{background:var(--amber)}
+.calm{background:rgba(255,255,255,.08);border-radius:16px;padding:18px 20px;text-align:center;max-width:500px}
+.calm p{font-size:15px;font-weight:700;line-height:1.55}
+.btn-cancel{padding:14px 60px;background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.3);border-radius:16px;font-size:16px;font-weight:800;transition:var(--tr)}
+.btn-cancel:hover{background:rgba(255,255,255,.25)}
+.aviz{display:flex;align-items:center;gap:3px;height:18px}
+.aviz span{display:block;width:3px;background:rgba(255,255,255,.75);border-radius:2px;animation:avb .8s ease-in-out infinite}
+.aviz span:nth-child(1){height:8px;animation-delay:0s}
+.aviz span:nth-child(2){height:14px;animation-delay:.1s}
+.aviz span:nth-child(3){height:18px;animation-delay:.2s}
+.aviz span:nth-child(4){height:10px;animation-delay:.15s}
+.aviz span:nth-child(5){height:16px;animation-delay:.05s}
+
+/* ─────────────────────────────────────────────
+   NAVIGATE VIEW
+───────────────────────────────────────────── */
+.nav-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;min-height:68vh}
+.nav-map{background:linear-gradient(135deg,#C8D6F8,#DCEAF8);border-radius:20px;position:relative;overflow:hidden;min-height:480px}
+[data-theme="dark"] .nav-map{background:linear-gradient(135deg,#0E1D58,#091438)}
+.route-svg{position:absolute;inset:0;width:100%;height:100%}
+.rpath{fill:none;stroke:var(--blue);stroke-width:6;stroke-linecap:round;stroke-dasharray:1000;stroke-dashoffset:1000;animation:draw 2.5s ease forwards .4s}
+.mk{position:absolute;display:flex;flex-direction:column;align-items:center}
+.mk.you{bottom:28%;left:28%;transform:translate(-50%,50%)}
+.mk.pol{top:18%;right:22%;transform:translate(50%,-50%)}
+.mkpin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.mkpin.yp{background:var(--blue)}.mkpin.pp{background:var(--sos)}
+.mkpin span{transform:rotate(45deg);font-size:13px}
+.mklbl{background:var(--card);font-size:10px;font-weight:800;color:var(--t1);padding:3px 8px;border-radius:9px;margin-top:5px;white-space:nowrap;box-shadow:var(--sh1)}
+.nav-r{display:flex;flex-direction:column;gap:14px}
+.nav-ic{background:var(--card);border:1px solid var(--bdr);border-radius:18px;padding:20px;box-shadow:var(--sh2)}
+.st-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.st-ic{width:46px;height:46px;background:var(--blue-lt);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.st-det h3{font-size:15px;font-weight:800;color:var(--t1)}.st-det p{font-size:12px;color:var(--t2);font-weight:600;margin-top:3px}
+.nm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.nm{background:var(--blue-xl);border-radius:12px;padding:12px;text-align:center}
+.nm .mv{font-size:22px;font-weight:900;color:var(--blue);font-family:var(--fd)}.nm .ml{font-size:10px;font-weight:700;color:var(--t3);margin-top:2px}
+.btn-go{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--blue-dk));color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:900;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 20px rgba(27,79,216,.35)}
+.btn-go:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(27,79,216,.45)}
+
+/* ─────────────────────────────────────────────
+   CONTACTS VIEW
+───────────────────────────────────────────── */
+.ct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.ct-card{background:var(--card);border:1px solid var(--bdr);border-radius:16px;padding:17px;box-shadow:var(--sh1);display:flex;align-items:center;gap:13px;transition:var(--tr)}
+.ct-card:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
+.ct-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;font-family:var(--fd)}
+.ct-info{flex:1;min-width:0}
+.ct-name{font-size:14px;font-weight:800;color:var(--t1);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ct-phone{font-size:12px;color:var(--t2);font-weight:600;margin-top:3px}
+.ct-rel{font-size:11px;color:var(--t3);font-weight:700;margin-top:2px}
+.ct-acts{display:flex;flex-direction:column;gap:5px}
+.ct-act{width:32px;height:32px;border-radius:50%;border:none;background:var(--blue-lt);color:var(--blue);display:flex;align-items:center;justify-content:center;transition:var(--tr);font-size:13px}
+.ct-act:hover{background:var(--blue);color:#fff}
+.ct-act.del:hover{background:var(--sos);color:#fff}
+.btn-add-ct{width:100%;padding:14px;background:var(--card);color:var(--blue);border:2px dashed rgba(27,79,216,.28);border-radius:16px;font-size:14px;font-weight:800;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}
+.btn-add-ct:hover{background:var(--blue-lt)}
+
+/* ─────────────────────────────────────────────
+   SETTINGS VIEW
+───────────────────────────────────────────── */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.prof-card{grid-column:1/-1;background:linear-gradient(135deg,var(--blue),var(--blue-dk));border-radius:20px;padding:22px 24px;display:flex;align-items:center;gap:14px;color:#fff;border:none;box-shadow:var(--sh2)}
+.prof-av{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:27px;flex-shrink:0}
+.prof-nfo h3{font-size:17px;font-weight:800}
+.prof-nfo p{font-size:12px;opacity:.7;margin-top:3px;font-weight:600}
+.btn-edit{margin-left:auto;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);color:#fff;border-radius:11px;padding:9px 17px;font-size:13px;font-weight:700;transition:var(--tr)}
+.btn-edit:hover{background:rgba(255,255,255,.24)}
+.sgc{background:var(--card);border:1px solid var(--bdr);border-radius:18px;padding:20px;box-shadow:var(--sh1)}
+.sgt{font-size:10px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:13px}
+.srow{display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;transition:var(--tr);margin-bottom:2px}
+.srow:hover{background:var(--blue-xl)}
+.srow.clickable{cursor:pointer}
+.sr-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sr-tx{flex:1}
+.sr-tx h4{font-size:13px;font-weight:700;color:var(--t1)}
+.sr-tx p{font-size:11px;color:var(--t3);font-weight:600;margin-top:2px}
+.sr-arr{font-size:14px;color:var(--t3);flex-shrink:0}
+.toggle{position:relative;width:42px;height:23px;flex-shrink:0}
+.toggle input{display:none}
+.tgl{position:absolute;inset:0;background:var(--bdr);border-radius:12px;cursor:pointer;transition:var(--tr)}
+.tgl::after{content:'';position:absolute;top:3px;left:3px;width:17px;height:17px;background:#fff;border-radius:50%;transition:var(--tr);box-shadow:0 2px 5px rgba(0,0,0,.2)}
+.toggle input:checked+.tgl{background:var(--blue)}
+.toggle input:checked+.tgl::after{transform:translateX(19px)}
+.btn-logout{width:100%;padding:13px;background:transparent;color:var(--sos);border:1.5px solid rgba(229,62,62,.25);border-radius:14px;font-size:14px;font-weight:800;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:7px;margin-top:4px}
+.btn-logout:hover{background:rgba(229,62,62,.06)}
+
+/* ─────────────────────────────────────────────
+   RIGHT PANEL
+───────────────────────────────────────────── */
+.rp-ttl{font-size:13px;font-weight:800;color:var(--t1);margin-bottom:11px;display:flex;align-items:center;justify-content:space-between}
+.rp-ttl a{font-size:11px;font-weight:700;color:var(--blue);cursor:pointer}
+.rp-ct{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--blue-xl);border-radius:11px;margin-bottom:6px;transition:var(--tr)}
+.rp-ct:hover{background:var(--blue-lt)}
+.rp-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;font-family:var(--fd)}
+.rp-ci{flex:1;min-width:0}
+.rp-cn{font-size:12px;font-weight:800;color:var(--t1);display:flex;align-items:center;gap:4px}
+.rp-cp{font-size:10px;color:var(--t3);font-weight:600;margin-top:1px}
+.rp-ca{width:27px;height:27px;border-radius:50%;border:none;background:var(--card);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:var(--sh1);transition:var(--tr)}
+.rp-ca:hover{background:var(--blue);color:#fff}
+.btn-add-rp{width:100%;padding:9px;background:transparent;color:var(--blue);border:1.5px dashed rgba(27,79,216,.3);border-radius:11px;font-size:12px;font-weight:800;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:5px;margin-top:3px}
+.btn-add-rp:hover{background:var(--blue-lt)}
+.rp-div{border-top:1px solid var(--bdr);padding-top:13px}
+.rp-si{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--blue-xl);border-radius:10px;margin-bottom:5px;font-size:12px;font-weight:700;color:var(--t2)}
+.rp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:blink 2s ease-in-out infinite}
+.rp-dot.on{background:var(--green)}.rp-dot.warn{background:var(--amber);animation:none}
+.rp-hl{display:flex;align-items:center;gap:7px;padding:9px 11px;background:var(--blue-xl);border:none;border-radius:11px;font-size:12px;font-weight:700;color:var(--t1);transition:var(--tr);margin-bottom:5px;width:100%;text-align:left}
+.rp-hl:hover{background:var(--blue-lt)}
+
+/* ─────────────────────────────────────────────
+   MOBILE BOTTOM NAV
+───────────────────────────────────────────── */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--card);border-top:1px solid var(--bdr);z-index:150;justify-content:space-around;align-items:center;box-shadow:0 -4px 18px rgba(27,79,216,.08)}
+.mnb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 12px;border-radius:10px;border:none;background:transparent;color:var(--t3);min-width:54px;transition:var(--tr)}
+.mnb svg{width:21px;height:21px;transition:var(--tr)}
+.mnb span{font-size:10px;font-weight:700}
+.mnb.act{color:var(--blue)}.mnb.act svg{transform:scale(1.15)}
+
+/* ─────────────────────────────────────────────
+   MODALS (shared base)
+───────────────────────────────────────────── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity var(--tr);padding:20px}
+.modal-ov.open{opacity:1;pointer-events:all}
+.modal-box{background:var(--card);border:1px solid var(--bdr);border-radius:24px;padding:30px 26px;width:100%;max-width:460px;box-shadow:var(--sh3);transform:scale(.94) translateY(14px);transition:transform var(--tr);max-height:90dvh;overflow-y:auto}
+.modal-ov.open .modal-box{transform:scale(1) translateY(0)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.modal-hdr h3{font-family:var(--fd);font-size:20px;font-weight:800;color:var(--t1)}
+.modal-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--bg);color:var(--t2);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--tr);flex-shrink:0}
+.modal-close:hover{background:var(--blue-lt);color:var(--blue)}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:11px;font-weight:800;color:var(--t3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--bg);border:1.5px solid var(--bdr);border-radius:12px;padding:12px 13px;color:var(--t1);font-size:14px;font-weight:600;outline:none;transition:var(--tr);-webkit-appearance:none;resize:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--blue);background:var(--card);box-shadow:0 0 0 3px rgba(27,79,216,.1)}
+.fld .hint{font-size:11px;color:var(--t3);font-weight:600;margin-top:5px;line-height:1.5}
+.modal-btns{display:flex;gap:9px;margin-top:6px}
+.btn-primary{flex:1;padding:13px;background:linear-gradient(135deg,var(--blue),var(--blue-dk));color:#fff;border:none;border-radius:13px;font-size:14px;font-weight:800;cursor:pointer;transition:var(--tr);box-shadow:0 5px 16px rgba(27,79,216,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(27,79,216,.4)}
+.btn-secondary{padding:13px 18px;background:var(--bg);color:var(--t2);border:1px solid var(--bdr);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:var(--tr)}
+.btn-secondary:hover{background:var(--blue-lt)}
+
+
+/* ── PIN Modal specific ── */
+.pin-strength{height:5px;border-radius:3px;background:var(--bg);margin-top:8px;overflow:hidden}
+.pin-strength-bar{height:100%;border-radius:3px;transition:width .4s,background .4s;width:0}
+.pin-strength-label{font-size:11px;font-weight:700;color:var(--t3);margin-top:5px}
+.pin-rules{display:flex;flex-direction:column;gap:6px;padding:12px 14px;background:var(--blue-xl);border-radius:12px;margin-bottom:14px}
+.pin-rule{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--t3);transition:var(--tr)}
+.pin-rule.ok{color:var(--green)}
+.pin-rule .dot{width:8px;height:8px;border-radius:50%;background:var(--t3);flex-shrink:0;transition:var(--tr)}
+.pin-rule.ok .dot{background:var(--green)}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:42px}
+.pw-eye{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--t3);transition:var(--tr);padding:0}
+.pw-eye:hover{color:var(--blue)}
+
+/* ── Notification Modal specific ── */
+.notif-section{margin-bottom:18px}
+.notif-section-title{font-size:11px;font-weight:900;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.notif-row{display:flex;align-items:center;gap:12px;padding:11px 13px;background:var(--blue-xl);border-radius:12px;margin-bottom:7px}
+.notif-row .notif-ic{font-size:18px;flex-shrink:0}
+.notif-row .notif-tx{flex:1}
+.notif-row .notif-tx h4{font-size:13px;font-weight:700;color:var(--t1)}
+.notif-row .notif-tx p{font-size:11px;color:var(--t3);font-weight:600;margin-top:2px}
+.notif-quiet-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:6px}
+.notif-quiet-grid label{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:block}
+.notif-quiet-grid input[type="time"]{width:100%;background:var(--bg);border:1.5px solid var(--bdr);border-radius:12px;padding:10px 12px;color:var(--t1);font-size:14px;font-weight:600;outline:none;-webkit-appearance:none}
+.notif-quiet-grid input[type="time"]:focus{border-color:var(--blue);background:var(--card)}
+.notif-sound-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sound-opt{padding:10px 6px;background:var(--bg);border:2px solid var(--bdr);border-radius:12px;text-align:center;cursor:pointer;transition:var(--tr)}
+.sound-opt:hover{border-color:var(--blue);background:var(--blue-lt)}
+.sound-opt.sel{border-color:var(--blue);background:var(--blue-lt)}
+.sound-opt .s-icon{font-size:20px;margin-bottom:4px}
+.sound-opt .s-lbl{font-size:11px;font-weight:700;color:var(--t1)}
+.sound-opt .s-play{
+  display:block;margin:5px auto 0;
+  width:26px;height:26px;border-radius:50%;
+  border:1.5px solid var(--bdr);
+  background:var(--card);color:var(--blue);
+  font-size:10px;cursor:pointer;
+  transition:var(--tr);line-height:1;
+}
+.sound-opt .s-play:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.sound-opt.sel .s-play{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* ─────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────── */
+#toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--t1);color:var(--card);padding:11px 22px;border-radius:30px;font-size:13px;font-weight:700;z-index:500;opacity:0;transition:opacity .28s,transform .28s;white-space:nowrap;box-shadow:var(--sh3);pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ─────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────── */
+
+/* 1280px – hide right panel */
+@media(max-width:1280px){.rp{display:none}}
+
+/* 1024px – narrow sidebar, collapse some grids */
+@media(max-width:1024px){
+  :root{--sbw:200px;--tbh:62px}
+  .set-grid{grid-template-columns:1fr}
+  .set-grid .prof-card{grid-column:1}
+  .nav-grid{grid-template-columns:1fr}
+  .nav-map{min-height:320px}
+  .sos-irow{grid-template-columns:1fr}
+}
+
+/* 860px – stack home grid */
+@media(max-width:860px){
+  .home-grid{grid-template-columns:1fr}
+  .map-card{grid-column:1;grid-row:auto}
+}
+
+/* 768px – mobile layout */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .tb-nav{display:none}
+  .btn-sos-hd{display:none}
+  .hamburger{display:flex}
+  .main{padding:14px 14px 76px}
+  .topbar{padding:0 13px}
+  .mob-nav{display:flex}
+  /* Login mobile */
+  .ln-body{grid-template-columns:1fr}
+  .ln-hero{display:none}
+  .ln-form-wrap{padding:28px 18px}
+  .ln-top{padding:13px 18px}
+  .ln-footer{gap:14px;padding:11px 18px}
+  /* Misc */
+  .sos-pg{padding:20px 14px;border-radius:14px}
+  .ct-grid{grid-template-columns:1fr}
+  .pg-hdr h1{font-size:18px}
+  .sos-irow{grid-template-columns:1fr}
+  .btn-cancel{padding:14px 36px}
+  .home-grid{grid-template-columns:1fr}
+}
+
+/* 480px */
+@media(max-width:480px){
+  .hl-grid{grid-template-columns:repeat(2,1fr)}
+  .ln-card{padding:24px 18px}
+  .notif-sound-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  LOGIN PAGE                              ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="pg-login">
+  <div class="ln-top">
+    <div class="ln-brand">
+      <!-- Replace src with your actual logo path: /static/prahari-logo.png -->
+      <img src="logo.png"
+           onerror="this.style.display='none'" alt="logo">
+      <span>प्रhari</span>
+    </div>
+    <button class="btn100" onclick="callPolice()">☏ Emergency: 100</button>
+  </div>
+
+  <div class="ln-body">
+    <!-- Hero (left) -->
+    <div class="ln-hero">
+      <div class="ln-hero-logo">
+        <img src="logo.png"
+             onerror="this.style.display='none'" alt="logo">
+       <span class="aname">प्रhari</span>
+      </div>
+      <h1>Always Alert.<br><span>Always There.</span></h1>
+      <p>Instant emergency assistance, live tracking, and smart navigation — all in one app. Built for India, built for you.</p>
+      <div class="ln-feats">
+        <div class="ln-feat"><div class="ln-fi">🚨</div>One-Tap SOS with 5-second cancel buffer</div>
+        <div class="ln-feat"><div class="ln-fi">📍</div>Live location sharing to all contacts</div>
+        <div class="ln-feat"><div class="ln-fi">🎤</div>Voice-triggered SOS — say "Help me"</div>
+        <div class="ln-feat"><div class="ln-fi">🚔</div>Navigate to nearest police station</div>
+        <div class="ln-feat"><div class="ln-fi">📴</div>Offline SMS fallback</div>
+      </div>
+    </div>
+
+    <!-- Form (right) -->
+    <div class="ln-form-wrap" id="ln-form-wrap">
+
+      <!-- ── LOGIN CARD ── -->
+      <div class="ln-card" id="login-card">
+        <h2>Welcome to प्रhari</h2>
+        <p>Login to access your safety dashboard</p>
+
+        <div class="fgrp">
+          <label>Phone Number</label>
+          <div class="fw"><span class="ic">☎</span>
+            <input type="tel" id="ln-user" placeholder="10-digit phone number" maxlength="10"
+              onkeydown="if(event.key==='Enter') doLogin()">
+          </div>
+        </div>
+        <div class="fgrp">
+          <label>4-digit Login PIN</label>
+          <div class="fw"><span class="ic">🔒︎</span>
+            <input type="password" id="ln-pass" placeholder="Enter your PIN" maxlength="4"
+              onkeydown="if(event.key==='Enter') doLogin()">
+          </div>
+        </div>
+
+        <!-- BACKEND: POST /api/auth/login { phone, pin } → { token, user } -->
+        <button class="btn-login" onclick="doLogin()">Login Securely</button>
+
+        <div class="divid">or continue with</div>
+
+        <!-- ── Firebase Google Sign-In ── -->
+        <button class="btn-google" id="google-login-btn" onclick="signInWithGoogle()">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.27 9.76A7.08 7.08 0 0112 4.92c1.69 0 3.21.59 4.41 1.56l3.29-3.29A11.8 11.8 0 0012 1C8.24 1 4.96 3.02 3.01 6.08l2.26 3.68z"/><path fill="#34A853" d="M16.04 18.01A7.02 7.02 0 0112 19.08c-2.97 0-5.5-1.83-6.64-4.44L3.1 18.35A11.8 11.8 0 0012 23c3.58 0 6.61-1.35 8.83-3.57l-4.79-1.42z"/><path fill="#4A90D9" d="M20.83 19.43A11.8 11.8 0 0023 12c0-.75-.07-1.49-.21-2.2H12v4.38h6.18a5.25 5.25 0 01-2.32 3.44l4.97 1.81z"/><path fill="#FBBC05" d="M5.36 14.64A7.1 7.1 0 014.92 12c0-.93.17-1.82.44-2.64L3.01 5.68A11.84 11.84 0 001 12c0 1.9.45 3.7 1.25 5.3l3.11-2.66z"/></svg>
+          Login with Google
+        </button>
+
+        <div class="sos-strip">
+          <p>Emergency? No login needed</p>
+          <button class="btn100" onclick="callPolice()">☏ Call Police — 100</button>
+        </div>
+
+        <div style="text-align:center;margin-top:16px;font-size:12px;font-weight:700;color:rgba(255,255,255,.55)">
+          New user? <a onclick="showRegForm()" style="color:#fff;cursor:pointer;font-weight:800;text-decoration:none">Create Account →</a>
+        </div>
+      </div>
+
+      <!-- ── REGISTRATION CARD ── -->
+      <div class="ln-card" id="reg-card" style="display:none;overflow-y:auto;max-height:calc(100dvh - 140px)">
+        <h2>Create Account</h2>
+        <p style="font-size:13px;color:rgba(255,255,255,.5);font-weight:600;margin-bottom:18px">Register for emergency safety</p>
+
+        <div class="fgrp">
+          <label>Full Name</label>
+          <div class="fw"><span class="ic"></span>
+            <input type="text" id="reg-name" placeholder="Enter your full name"
+              onkeydown="if(event.key==='Enter') doRegister()">
+          </div>
+        </div>
+        <div class="fgrp">
+          <label>Phone Number</label>
+          <div class="fw"><span class="ic"></span>
+            <input type="tel" id="reg-phone" placeholder="10-digit phone number" maxlength="10"
+              onkeydown="if(event.key==='Enter') doRegister()">
+          </div>
+        </div>
+        <div class="fgrp">
+          <label>Gender</label>
+          <select id="reg-gender" style="width:100%;background:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;padding:12px 14px;color:#1B4FD8;font-size:14px;font-weight:700;outline:none;-webkit-appearance:none;cursor:pointer;font-family:var(--f)">
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+            <option value="prefer-not">Prefer not to say</option>
+          </select>
+        </div>
+        <div class="fgrp">
+          <label>Date of Birth</label>
+          <div class="fw">
+            <input type="date" id="reg-dob" style="padding-left:14px"
+              onkeydown="if(event.key==='Enter') doRegister()">
+          </div>
+        </div>
+        <div class="fgrp">
+          <label>Area PIN Code</label>
+          <div class="fw"><span class="ic"></span>
+            <input type="text" id="reg-pincode" placeholder="6-digit area PIN code" maxlength="6"
+              onkeydown="if(event.key==='Enter') doRegister()">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <input type="checkbox" id="reg-abled" style="width:18px;height:18px;cursor:pointer;accent-color:var(--blue)">
+          <label for="reg-abled" style="font-size:12px;font-weight:700;color:rgba(255,255,255,.75);cursor:pointer">I am specially abled</label>
+        </div>
+        <div class="fgrp">
+          <label>Set 4-digit Login PIN</label>
+          <div class="fw"><span class="ic"></span>
+            <input type="password" id="reg-pin" placeholder="Create a 4-digit PIN" maxlength="4"
+              onkeydown="if(event.key==='Enter') doRegister()">
+          </div>
+        </div>
+
+        <button class="btn-login" onclick="doRegister()">Create Account</button>
+
+        <div style="text-align:center;margin-top:14px;font-size:12px;font-weight:700;color:rgba(255,255,255,.55)">
+          Already have an account? <a onclick="showLoginForm()" style="color:#fff;cursor:pointer;font-weight:800;text-decoration:none">Sign In →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="ln-footer">
+    <div class="lnf-item">🛡️ Your safety is our priority</div>
+    <div class="lnf-item">📍 Live tracking active</div>
+    <div class="lnf-item">🎙 Voice commands enabled</div>
+    <div class="lnf-item">🚨 Emergency response ready</div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  APP                                     ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="pg-app">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="tb-l">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <img class="tb-logo" src="logo.png"
+           onerror="this.style.display='none'" alt="logo">
+      <span class="tb-name">प्रhari</span>
+    </div>
+
+    <nav class="tb-nav">
+      <button class="tnb act" id="tnb-home" onclick="goView('home')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home
+      </button>
+      <button class="tnb" id="tnb-navigate" onclick="goView('navigate')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>Navigate
+      </button>
+      <button class="tnb" id="tnb-contacts" onclick="goView('contacts')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Contacts
+      </button>
+      <button class="tnb" id="tnb-settings" onclick="goView('settings')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings
+      </button>
+    </nav>
+
+    <div class="tb-r">
+      <div class="sp">System Active</div>
+      <button class="icb" onclick="toggleTheme()" title="Toggle Dark Mode">🌕</button>
+      <button class="icb" title="Settings" onclick="openModal('modal-guidelines')" style="font-size:17px">📋</button>
+      <button class="btn-sos-hd" onclick="triggerSOS()">🚨 Emergency SOS</button>
+    </div>
+  </header>
+
+  <div id="off-bar" class="off-bar">⚠️ Offline — SMS fallback active</div>
+
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-sec">Main</div>
+      <button class="sb-lnk act" id="sl-home" onclick="goView('home')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home
+      </button>
+      <button class="sb-lnk" id="sl-navigate" onclick="goView('navigate')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>Navigate to Police
+      </button>
+      <button class="sb-lnk" id="sl-contacts" onclick="goView('contacts')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        Contacts <span class="sb-badge" id="sb-cnt">4</span>
+      </button>
+
+      <div class="sb-sec">Safety Tools</div>
+      <button class="sb-lnk" onclick="triggerSOS()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>Trigger SOS
+      </button>
+      <button class="sb-lnk" onclick="callHelpline('100','Police')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>Call Police — 100
+      </button>
+      <button class="sb-lnk" onclick="callHelpline('112','Women Safety')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Women Safety — 112
+      </button>
+
+      <div class="sb-sec">Account</div>
+      <button class="sb-lnk" id="sl-settings" onclick="goView('settings')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings
+      </button>
+
+      <div class="sb-sos">
+        <button class="btn-sb-sos" onclick="triggerSOS()">🚨 SOS NOW</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main" id="main-content">
+
+      <!-- ═══ HOME ═══ -->
+      <div class="view act" id="view-home">
+        <div class="pg-hdr fi">
+          <div><h1>Welcome to प्रhari 💙</h1><p>You are protected. Hold the SOS button for 3 seconds in an emergency.</p></div>
+          <span class="badge bg">● GPS Active</span>
+        </div>
+        <div class="home-grid">
+          <!-- Welcome Banner -->
+          <div class="wel fi d1"><h2>Your Safety Dashboard</h2><p>Live tracking active · Voice commands enabled · Emergency response ready</p></div>
+
+          <!-- SOS -->
+          <div class="card card-p sos-card fi d2">
+            <div class="ct">Emergency SOS</div>
+            <div class="sos-outer"><div class="sos-inn">
+              <button class="sos-btn" id="sos-btn"
+                onmousedown="startPress()" onmouseup="endPress()"
+                ontouchstart="startPress(event)" ontouchend="endPress()">
+                <span>SOS</span><small>Hold 3 sec</small>
+              </button>
+            </div></div>
+            <div class="sos-hint">🎙️ Say "Help me" to trigger SOS</div>
+            <div class="stats-row">
+              <div class="stat"><div class="si">📍</div><div class="sl">Location</div>
+                <!-- BACKEND: GET /api/location/current -->
+                <div class="sv" id="t-loc">Tracking</div></div>
+              <div class="stat"><div class="si">🚔</div><div class="sl">Nearest PS</div>
+                <!-- BACKEND: GET /api/police/nearest -->
+                <div class="sv" id="t-ps">1.2 km</div></div>
+              <div class="stat"><div class="si">🔊</div><div class="sl">Voice</div>
+                <div class="sv" style="color:var(--green)">On</div></div>
+            </div>
+          </div>
+
+          <!-- Map -->
+          <div class="map-card card card-p fi d3">
+            <div class="ct">Live Location Preview <span class="badge bg" id="home-gps-badge">● Locating…</span></div>
+            <div id="home-map"></div>
+          </div>
+
+          <!-- Helplines -->
+          <div class="card card-p fi d4">
+            <div class="ct">Emergency Helplines</div>
+            <div class="hl-grid">
+              <!-- BACKEND: POST /api/emergency/log { number } then dial -->
+              <button class="hl-btn pol" onclick="callHelpline('100','Police')"><span class="hli">🚓</span><span class="hln">100</span><span class="hll">Police</span></button>
+              <button class="hl-btn wom" onclick="callHelpline('112','Women Safety')"><span class="hli">♀️</span><span class="hln">112</span><span class="hll">Women Safety</span></button>
+              <button class="hl-btn amb" onclick="callHelpline('108','Ambulance')"><span class="hli">🚑</span><span class="hln">108</span><span class="hll">Ambulance</span></button>
+              <button class="hl-btn fir" onclick="callHelpline('101','Fire')"><span class="hli">🚒</span><span class="hln">101</span><span class="hll">Fire Safety</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SOS ACTIVE ═══ -->
+      <div class="view" id="view-sos">
+        <div class="sos-pg">
+          <div class="sos-pg-hd"><h2>🚨 SOS ACTIVATED</h2><p>Help is on the way. Stay calm.</p></div>
+          <div class="cdring">
+            <svg viewBox="0 0 170 170"><circle class="ring-bg" cx="85" cy="85" r="75"/><circle class="ring-p" id="ring-p" cx="85" cy="85" r="75"/></svg>
+            <div class="cdnum"><span id="cdnum">5</span><small>seconds</small></div>
+          </div>
+          <div class="sos-irow">
+            <div class="sos-sbox">
+              <div class="si"><div class="sid on"></div>Live location is being shared</div>
+              <div class="si"><div class="sid on"></div>SMS alerts sent to all contacts</div>
+              <div class="si"><div class="sid pd"></div>Audio recording in progress
+                <div class="aviz"><span></span><span></span><span></span><span></span><span></span></div>
+              </div>
+              <!-- BACKEND: POST /api/sos/trigger { lat, lng } handles all alerts -->
+              <div class="si"><div class="sid pd"></div>Calling primary contact…</div>
+            </div>
+            <div class="calm">
+              <p>💙 You are not alone.<br>Stay calm, breathe slowly.<br>Help is coming to you right now.</p>
+            </div>
+          </div>
+          <!-- BACKEND: POST /api/sos/cancel { incident_id } -->
+          <button class="btn-cancel" id="btn-cancel" onclick="cancelSOS()">✕ Cancel SOS</button>
+        </div>
+      </div>
+
+      <!-- ═══ NAVIGATE ═══ -->
+      <div class="view" id="view-navigate">
+        <div class="pg-hdr fi">
+          <div><h1>Navigate to Police Station</h1><p>Fastest route to the nearest police station from your location</p></div>
+          <button class="icb" onclick="toggleVoice()" id="voice-btn" title="Voice Assistant">👩🏻‍💼</button>
+        </div>
+        <div class="nav-grid fi d1">
+          <div class="nav-map" style="overflow:visible; padding:0;">
+            <div id="nav-map-leaflet" style="border-radius:20px; overflow:hidden;"></div>
+          </div>
+          <div class="nav-r">
+            <div class="nav-ic">
+              <div class="st-row">
+                <div class="st-ic">🚔</div>
+                <div class="st-det">
+                  <h3 id="nav-ps-name">Locating nearest station…</h3>
+                  <p id="nav-ps-address">📍 Getting your location…</p>
+                </div>
+              </div>
+              <div class="nm-grid">
+                <div class="nm"><div class="mv" id="nav-ps-dist">—</div><div class="ml">Distance</div></div>
+                <div class="nm"><div class="mv" id="nav-ps-time">—</div><div class="ml">Est. Time</div></div>
+              </div>
+              <button class="btn-go" onclick="startNav()">➤ Start Navigation</button>
+            </div>
+            <div class="nav-ic">
+              <div class="ct" style="margin-bottom:10px">📋 Route Info</div>
+              <p style="font-size:12px;color:var(--t2);line-height:1.65;font-weight:600">
+                🚶 Mode: Walking (Fastest)<br><br>🛣 Via: <span id="nav-ps-road">Calculating route…</span><br><br>📞 Station: <span id="nav-ps-phone">Loading…</span>
+              </p>
+              <button onclick="callNavStation()"
+                style="width:100%;margin-top:13px;padding:11px;background:var(--blue-xl);color:var(--blue);border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;transition:var(--tr)"
+                onmouseover="this.style.background='var(--blue-lt)'" onmouseout="this.style.background='var(--blue-xl)'">
+                📞 Call Station Directly
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ CONTACTS ═══ -->
+      <div class="view" id="view-contacts">
+        <div class="pg-hdr fi">
+          <div><h1>Emergency Contacts</h1><p>Primary contact called first · Up to 4 contacts</p></div>
+          <button class="btn-add-ct" style="width:auto;padding:10px 18px;font-size:13px;margin-top:0" onclick="openCtModal()">➕ Add Contact</button>
+        </div>
+        <!-- BACKEND: GET /api/contacts → [ { id, name, phone, relation, is_primary } ] -->
+        <div class="ct-grid fi d1" id="cts-grid"></div>
+        <button class="btn-add-ct fi d2" onclick="openCtModal()">➕ Add New Contact</button>
+        <div class="card card-p fi d3" style="margin-top:16px;max-width:620px">
+          <div class="ct" style="margin-bottom:7px">ℹ️ How SOS Contacts Work</div>
+          <p style="font-size:12px;color:var(--t2);line-height:1.65;font-weight:600">
+            During SOS, your <strong>primary contact</strong> receives an automatic call. All contacts receive an SMS with your live location. Up to <strong>4 contacts</strong> supported.
+          </p>
+        </div>
+      </div>
+
+      <!-- ═══ SETTINGS ═══ -->
+      <div class="view" id="view-settings">
+        <div class="pg-hdr fi"><h1>Settings &amp; Preferences</h1></div>
+        <div class="set-grid">
+
+          <!-- Profile -->
+          <div class="prof-card fi d1">
+            <div class="prof-av">👤</div>
+            <div class="prof-nfo">
+              <!-- BACKEND: GET /api/user/profile -->
+              <h3 id="prof-name">Priya Sharma</h3>
+              <p id="prof-phone">+91 98765 43210</p>
+            </div>
+            <!-- BACKEND: PUT /api/user/profile { name, phone } -->
+            <button class="btn-edit" onclick="showToast('Edit profile — connect to Flask')">Edit Profile</button>
+          </div>
+
+          <!-- Safety Settings -->
+          <div class="sgc fi d2">
+            <div class="sgt">Safety Features</div>
+            <div class="srow">
+              <div class="sr-ic" style="background:rgba(27,79,216,.1)">🎙️</div>
+              <div class="sr-tx"><h4>Voice Activation</h4>
+                <!-- BACKEND: PUT /api/settings/voice { enabled } -->
+                <p id="voice-status-txt">Trigger word: "Help me"</p>
+              </div>
+              <label class="toggle"><input type="checkbox" id="tgl-voice" checked onchange="onVoiceToggle()"><div class="tgl"></div></label>
+            </div>
+
+            <!-- Custom Voice Commands → opens modal -->
+            <div class="srow clickable" onclick="openWakeWordModal()">
+              <div class="sr-ic" style="background:linear-gradient(135deg,rgba(27,79,216,.15),rgba(74,120,232,.1))">✏️</div>
+              <div class="sr-tx"><h4>Custom Voice Commands</h4>
+                <p id="ww-settings-status">Browser Speech API · <span style="color:var(--green)">Active</span></p>
+              </div>
+              <span class="sr-arr">›</span>
+            </div>
+            <div class="srow">
+              <div class="sr-ic" style="background:rgba(16,185,129,.1)">📍</div>
+              <div class="sr-tx"><h4>Live Location Sharing</h4>
+                <!-- BACKEND: PUT /api/settings/location { enabled } -->
+                <p id="location-status-txt">Sharing during emergencies</p>
+              </div>
+              <label class="toggle"><input type="checkbox" id="tgl-location" checked onchange="onLocationToggle()"><div class="tgl"></div></label>
+            </div>
+            <div class="srow">
+              <div class="sr-ic" style="background:rgba(245,158,11,.1)">🎙️</div>
+              <div class="sr-tx"><h4>Audio Recording</h4>
+                <!-- BACKEND: PUT /api/settings/audio { enabled } -->
+                <p>Record &amp; send during SOS</p>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><div class="tgl"></div></label>
+            </div>
+            <div class="srow">
+              <div class="sr-ic" style="background:rgba(139,92,246,.1)">📴</div>
+              <div class="sr-tx"><h4>Offline SMS Fallback</h4>
+                <!-- BACKEND: PUT /api/settings/offline { enabled } -->
+                <p>SMS when internet is off</p>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><div class="tgl"></div></label>
+            </div>
+          </div>
+
+          <!-- App Settings -->
+          <div class="sgc fi d3">
+            <div class="sgt">App Preferences</div>
+            <div class="srow" onclick="toggleTheme()">
+              <div class="sr-ic" style="background:rgba(27,79,216,.1)">🌕</div>
+              <div class="sr-tx"><h4>Dark Mode</h4><p>Light / Dark theme</p></div>
+              <label class="toggle"><input type="checkbox" id="dark-tog" onchange="toggleTheme()"><div class="tgl"></div></label>
+            </div>
+            <!-- Change PIN → opens modal -->
+            <div class="srow clickable" onclick="openPinModal()">
+              <div class="sr-ic" style="background:rgba(16,185,129,.1)">🔐</div>
+              <div class="sr-tx"><h4>Change PIN</h4>
+                <!-- BACKEND: PUT /api/auth/pin { old_pin, new_pin } -->
+                <p>Update your security PIN</p>
+              </div>
+              <span class="sr-arr">›</span>
+            </div>
+            <!-- Notification Settings → opens modal -->
+            <div class="srow clickable" onclick="openNotifModal()">
+              <div class="sr-ic" style="background:rgba(245,158,11,.1)">🔔</div>
+              <div class="sr-tx"><h4>Notification Settings</h4>
+                <!-- BACKEND: GET/PUT /api/settings/notifications -->
+                <p>Manage alert preferences</p>
+              </div>
+              <span class="sr-arr">›</span>
+            </div>
+            <div class="srow clickable" onclick="showToast('Language settings — connect Flask')">
+              <div class="sr-ic" style="background:rgba(239,68,68,.1)">🌐</div>
+              <div class="sr-tx"><h4>Language</h4>
+                <!-- BACKEND: PUT /api/settings/language { lang:'hi'|'en' } -->
+                <p>English / Hindi</p>
+              </div>
+              <span class="sr-arr">›</span>
+            </div>
+          </div>
+
+          <!-- About -->
+          <div class="sgc fi d4">
+            <div class="sgt">About</div>
+            <div class="srow"><div class="sr-ic" style="background:var(--blue-lt)">ℹ️</div><div class="sr-tx"><h4>App Version</h4><p>v1.0.0 — प्रhari</p></div></div>
+            <div class="srow clickable" onclick="showToast('Privacy policy — link coming soon')">
+              <div class="sr-ic" style="background:var(--blue-lt)">📄</div>
+              <div class="sr-tx"><h4>Privacy Policy</h4><p>How we handle your data</p></div>
+              <span class="sr-arr">›</span>
+            </div>
+            <div class="srow clickable" onclick="openModal('modal-guidelines')">
+              <div class="sr-ic" style="background:rgba(16,185,129,.1)">📋</div>
+              <div class="sr-tx"><h4>App Guidelines</h4><p>Govt. of India safety standards</p></div>
+              <span class="sr-arr">›</span>
+            </div>
+            <!-- BACKEND: POST /api/auth/logout → clear session/token -->
+            <button class="btn-logout" onclick="doLogout()">➜]  Logout</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT PANEL -->
+    <aside class="rp">
+      <div>
+        <div class="rp-ttl">Emergency Contacts <a onclick="goView('contacts')">View All</a></div>
+        <div id="rp-cts"></div>
+        <button class="btn-add-rp" onclick="openCtModal()">➕ Add Contact</button>
+      </div>
+      <div class="rp-div">
+        <div class="rp-ttl">System Status</div>
+        <div class="rp-si"><div class="rp-dot on"></div>Live location active</div>
+        <div class="rp-si"><div class="rp-dot on"></div>Voice commands enabled</div>
+        <div class="rp-si"><div class="rp-dot on"></div>SMS fallback ready</div>
+        <!-- BACKEND: GET /api/police/nearest -->
+        <div class="rp-si"><div class="rp-dot on"></div>Nearest PS: 1.2 km</div>
+        <div class="rp-si" id="rp-off" style="display:none"><div class="rp-dot warn"></div>Offline — SMS mode</div>
+      </div>
+      <div class="rp-div">
+        <div class="rp-ttl">Quick Helplines</div>
+        <button class="rp-hl" onclick="callHelpline('100','Police')">🚓 Police — 100</button>
+        <button class="rp-hl" onclick="callHelpline('112','Women Safety')">♀️ Women Safety — 112</button>
+        <button class="rp-hl" onclick="callHelpline('108','Ambulance')">🚑 Ambulance — 108</button>
+        <button class="rp-hl" onclick="callHelpline('101','Fire')">🚒 Fire — 101</button>
+      </div>
+    </aside>
+
+  </div><!-- /app-body -->
+
+  <!-- MOBILE NAV -->
+  <nav class="mob-nav">
+    <button class="mnb act" id="mn-home" onclick="goView('home')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span>
+    </button>
+    <button class="mnb" id="mn-navigate" onclick="goView('navigate')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Navigate</span>
+    </button>
+    <button class="mnb" id="mn-contacts" onclick="goView('contacts')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg><span>Contacts</span>
+    </button>
+    <button class="mnb" id="mn-settings" onclick="goView('settings')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg><span>Settings</span>
+    </button>
+  </nav>
+
+</div><!-- /pg-app -->
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  MODAL: ADD CONTACT                      ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="modal-ov" id="modal-ct" onclick="closeModal('modal-ct',event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <h3>➕ Add Emergency Contact</h3>
+      <button class="modal-close" onclick="closeModal('modal-ct')">✕</button>
+    </div>
+    <div class="fld"><label>Full Name</label><input type="text" id="nc-n" placeholder="Mom, Sister, Best Friend…"></div>
+    <div class="fld"><label>Phone Number</label><input type="tel" id="nc-p" placeholder="+91 XXXXX XXXXX"></div>
+    <div class="fld"><label>Relation</label>
+      <select id="nc-r"><option>Family</option><option>Friend</option><option>Partner</option><option>Colleague</option><option>Other</option></select>
+    </div>
+    <div class="fld"><label>Set as Primary?</label>
+      <select id="nc-pm"><option value="0">No — Regular Contact</option><option value="1">Yes — Primary (Called first in SOS)</option></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('modal-ct')">Cancel</button>
+      <!-- BACKEND: POST /api/contacts { name, phone, relation, is_primary } -->
+      <button class="btn-primary" onclick="saveContact()"> Save Contact</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  MODAL: CHANGE PIN                       ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="modal-ov" id="modal-pin" onclick="closeModal('modal-pin',event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <h3>🔐 Change Security PIN</h3>
+      <button class="modal-close" onclick="closeModal('modal-pin')">✕</button>
+    </div>
+
+    <div class="pin-rules">
+      <div class="pin-rule" id="pr-len"><div class="dot"></div>At least 6 characters</div>
+      <div class="pin-rule" id="pr-num"><div class="dot"></div>Contains a number</div>
+      <div class="pin-rule" id="pr-upp"><div class="dot"></div>Contains uppercase letter</div>
+      <div class="pin-rule" id="pr-match"><div class="dot"></div>New PINs match</div>
+    </div>
+
+    <div class="fld">
+      <label>Current PIN</label>
+      <div class="pw-wrap">
+        <input type="password" id="pin-old" placeholder="Enter current PIN" autocomplete="current-password">
+        <button class="pw-eye" onclick="togglePw('pin-old',this)">👁</button>
+      </div>
+    </div>
+    <div class="fld">
+      <label>New PIN</label>
+      <div class="pw-wrap">
+        <input type="password" id="pin-new" placeholder="Enter new PIN" autocomplete="new-password" oninput="checkPinStrength()">
+        <button class="pw-eye" onclick="togglePw('pin-new',this)">👁</button>
+      </div>
+      <div class="pin-strength"><div class="pin-strength-bar" id="pin-bar"></div></div>
+      <div class="pin-strength-label" id="pin-lbl">Enter a new PIN</div>
+    </div>
+    <div class="fld">
+      <label>Confirm New PIN</label>
+      <div class="pw-wrap">
+        <input type="password" id="pin-confirm" placeholder="Repeat new PIN" autocomplete="new-password" oninput="checkPinStrength()">
+        <button class="pw-eye" onclick="togglePw('pin-confirm',this)">👁</button>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('modal-pin')">Cancel</button>
+      <!-- BACKEND: PUT /api/auth/pin { old_pin, new_pin } → { success } -->
+      <button class="btn-primary" onclick="savePin()">🔐 Update PIN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  MODAL: NOTIFICATION SETTINGS            ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="modal-ov" id="modal-notif" onclick="closeModal('modal-notif',event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <h3>🔔 Notification Settings</h3>
+      <button class="modal-close" onclick="closeModal('modal-notif')">✕</button>
+    </div>
+
+    <!-- Alert Types -->
+    <div class="notif-section">
+      <div class="notif-section-title">Alert Types</div>
+      <div class="notif-row">
+        <span class="notif-ic">🚨</span>
+        <div class="notif-tx"><h4>SOS Alerts</h4><p>Notify contacts when SOS is triggered</p></div>
+        <label class="toggle"><input type="checkbox" checked><div class="tgl"></div></label>
+      </div>
+      <div class="notif-row">
+        <span class="notif-ic">📍</span>
+        <div class="notif-tx"><h4>Location Updates</h4><p>Send location every 5 minutes during SOS</p></div>
+        <label class="toggle"><input type="checkbox" checked><div class="tgl"></div></label>
+      </div>
+      <div class="notif-row">
+        <span class="notif-ic">🎙️</span>
+        <div class="notif-tx"><h4>Voice Trigger Alerts</h4><p>Notify when voice command detected</p></div>
+        <label class="toggle"><input type="checkbox" checked><div class="tgl"></div></label>
+      </div>
+      <div class="notif-row">
+        <span class="notif-ic">📱</span>
+        <div class="notif-tx"><h4>SMS Notifications</h4><p>Send SMS to contacts (works offline)</p></div>
+        <label class="toggle"><input type="checkbox" checked><div class="tgl"></div></label>
+      </div>
+      <div class="notif-row">
+        <span class="notif-ic">📧</span>
+        <div class="notif-tx"><h4>Email Alerts</h4>
+          <!-- BACKEND: PUT /api/settings/notifications { email_alerts } -->
+          <p>Send email to registered address</p>
+        </div>
+        <label class="toggle"><input type="checkbox"><div class="tgl"></div></label>
+      </div>
+    </div>
+
+    <!-- Quiet Hours -->
+    <div class="notif-section">
+      <div class="notif-section-title">Quiet Hours</div>
+      <div class="notif-row" style="margin-bottom:10px">
+        <span class="notif-ic">🌙</span>
+        <div class="notif-tx"><h4>Enable Quiet Hours</h4><p>Mute non-emergency notifications</p></div>
+        <label class="toggle"><input type="checkbox" id="tgl-quiet" onchange="toggleQuiet()"><div class="tgl"></div></label>
+      </div>
+      <div id="quiet-times" style="display:none">
+        <div class="notif-quiet-grid">
+          <div><label>Start Time</label><input type="time" id="quiet-start" value="22:00"></div>
+          <div><label>End Time</label><input type="time" id="quiet-end" value="07:00"></div>
+        </div>
+        <div class="hint" style="font-size:11px;color:var(--t3);font-weight:600;margin-top:6px">⚠️ SOS alerts always override quiet hours</div>
+      </div>
+    </div>
+
+    <!-- Alert Sound -->
+    <div class="notif-section">
+      <div class="notif-section-title">Alert Sound</div>
+      <div class="notif-sound-grid" id="sound-grid">
+        <div class="sound-opt sel" onclick="selectSound(this,'default')">
+          <div class="s-icon">🔔</div><div class="s-lbl">Default</div>
+          <button class="s-play" onclick="event.stopPropagation();previewSound('default')" title="Preview">▶</button>
+        </div>
+        <div class="sound-opt" onclick="selectSound(this,'loud')">
+          <div class="s-icon">🔊</div><div class="s-lbl">Loud</div>
+          <button class="s-play" onclick="event.stopPropagation();previewSound('loud')" title="Preview">▶</button>
+        </div>
+        <div class="sound-opt" onclick="selectSound(this,'vibrate')">
+          <div class="s-icon">📳</div><div class="s-lbl">Vibrate</div>
+          <button class="s-play" onclick="event.stopPropagation();previewSound('vibrate')" title="Preview">▶</button>
+        </div>
+        <div class="sound-opt" onclick="selectSound(this,'silent')">
+          <div class="s-icon">🔕</div><div class="s-lbl">Silent</div>
+          <button class="s-play" onclick="event.stopPropagation();previewSound('silent')" title="Preview">▶</button>
+        </div>
+        <div class="sound-opt" onclick="selectSound(this,'siren')">
+          <div class="s-icon">🚨</div><div class="s-lbl">Siren</div>
+          <button class="s-play" onclick="event.stopPropagation();previewSound('siren')" title="Preview">▶</button>
+        </div>
+        <div class="sound-opt" onclick="selectSound(this,'chime')">
+          <div class="s-icon">🎵</div><div class="s-lbl">Chime</div>
+          <button class="s-play" onclick="event.stopPropagation();previewSound('chime')" title="Preview">▶</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('modal-notif')">Cancel</button>
+      <!-- BACKEND: PUT /api/settings/notifications { alert_types, quiet_hours, sound } -->
+      <button class="btn-primary" onclick="saveNotifSettings()">✅ Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  MODAL: GOVT GUIDELINES                  ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="modal-ov" id="modal-guidelines" onclick="closeModal('modal-guidelines',event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:560px">
+    <div class="modal-hdr">
+      <h3>📋 App Guidelines</h3>
+      <button class="modal-close" onclick="closeModal('modal-guidelines')">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--t2);font-weight:600;margin-bottom:16px;line-height:1.6">Government of India–aligned guidelines compiled from advisories, policies, and safety frameworks for women, digital apps, and public safety systems.</p>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <div style="background:var(--blue-xl);border-radius:12px;padding:14px;border-left:4px solid var(--blue)">
+        <div style="font-size:12px;font-weight:900;color:var(--blue);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">1. User Safety &amp; Emergency Response</div>
+        <ul style="font-size:12px;color:var(--t2);font-weight:600;line-height:1.8;padding-left:16px">
+          <li>Must provide quick emergency access (SOS/panic button)</li>
+          <li>Should enable real-time location sharing with authorities/contacts</li>
+          <li>Must integrate emergency helplines (100, 112, etc.)</li>
+          <li>Systems should ensure immediate response by police or services</li>
+        </ul>
+      </div>
+
+      <div style="background:var(--blue-xl);border-radius:12px;padding:14px;border-left:4px solid var(--purple)">
+        <div style="font-size:12px;font-weight:900;color:var(--purple);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">2. Data Privacy &amp; Security</div>
+        <ul style="font-size:12px;color:var(--t2);font-weight:600;line-height:1.8;padding-left:16px">
+          <li>Must protect user identity and personal data</li>
+          <li>Should follow consent-based data collection</li>
+          <li>Avoid unnecessary access to sensitive data (calls, storage, etc.)</li>
+          <li>Ensure no misuse or surveillance concerns</li>
+        </ul>
+      </div>
+
+      <div style="background:var(--blue-xl);border-radius:12px;padding:14px;border-left:4px solid var(--teal)">
+        <div style="font-size:12px;font-weight:900;color:var(--teal);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">3. Accessibility &amp; Ease of Use</div>
+        <ul style="font-size:12px;color:var(--t2);font-weight:600;line-height:1.8;padding-left:16px">
+          <li>App must be simple, fast, and usable in panic situations</li>
+          <li>Should work with minimal steps and low user effort</li>
+          <li>Must support multiple languages (including regional languages)</li>
+          <li>Should be inclusive for women, children, elderly</li>
+        </ul>
+      </div>
+
+      <div style="background:var(--blue-xl);border-radius:12px;padding:14px;border-left:4px solid var(--amber)">
+        <div style="font-size:12px;font-weight:900;color:var(--amber);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">4. Reliability &amp; Availability</div>
+        <ul style="font-size:12px;color:var(--t2);font-weight:600;line-height:1.8;padding-left:16px">
+          <li>Must function in low network or offline mode (SMS fallback)</li>
+          <li>Should provide accurate GPS tracking</li>
+          <li>Must ensure high uptime and quick response systems</li>
+        </ul>
+      </div>
+
+      <div style="background:var(--blue-xl);border-radius:12px;padding:14px;border-left:4px solid var(--green)">
+        <div style="font-size:12px;font-weight:900;color:var(--green);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">5. Integration with Authorities</div>
+        <ul style="font-size:12px;color:var(--t2);font-weight:600;line-height:1.8;padding-left:16px">
+          <li>Should be linked with police control rooms / emergency response systems</li>
+          <li>Must support tracking, alert monitoring, and quick dispatch</li>
+          <li>Align with women help desks &amp; emergency response initiatives</li>
+        </ul>
+      </div>
+
+      <div style="background:var(--blue-xl);border-radius:12px;padding:14px;border-left:4px solid var(--rose)">
+        <div style="font-size:12px;font-weight:900;color:var(--rose);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">6. Trust &amp; Safety Assurance</div>
+        <ul style="font-size:12px;color:var(--t2);font-weight:600;line-height:1.8;padding-left:16px">
+          <li>Ensure verified systems and secure backend</li>
+          <li>Avoid false alerts and misuse</li>
+          <li>Build user trust through transparency and reliability</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(229,62,62,.07);border-radius:12px;padding:14px;border-left:4px solid var(--sos)">
+        <div style="font-size:12px;font-weight:900;color:var(--sos);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">7. Special Women Safety Measures</div>
+        <ul style="font-size:12px;color:var(--t2);font-weight:600;line-height:1.8;padding-left:16px">
+          <li>Features like female support options / safer services encouraged</li>
+          <li>Focus on preventing crimes and ensuring quick reporting</li>
+          <li>Promote safe environment policies and awareness</li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="modal-btns" style="margin-top:16px">
+      <button class="btn-primary" onclick="closeModal('modal-guidelines')">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  MODAL: POLICE STATION INFO + APIS       ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="modal-ov" id="modal-station-info" onclick="closeModal('modal-station-info',event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:540px">
+    <div class="modal-hdr">
+      <h3>👮 Police Station Information</h3>
+      <button class="modal-close" onclick="closeModal('modal-station-info')">✕</button>
+    </div>
+
+    <div style="background:var(--blue-xl);border:1.5px solid var(--bdr);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:900;color:var(--blue);margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px">📍 Nearest Police Station</div>
+      <p style="font-size:14px;font-weight:800;color:var(--t1)" id="modal-ps-name">Fetching from GPS…</p>
+      <p style="font-size:12px;color:var(--t2);margin:4px 0" id="modal-ps-addr">—</p>
+      <p style="font-size:12px;font-weight:700;color:var(--sos)" id="modal-ps-phone">—</p>
+      <p style="font-size:11px;color:var(--t3);margin-top:6px">Powered by: <code style="background:rgba(27,79,216,.12);padding:1px 6px;border-radius:5px;font-size:10px">getNearest(lat, lng)</code></p>
+    </div>
+
+    <div style="background:var(--blue-xl);border:1.5px solid var(--bdr);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:900;color:var(--blue);margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px">🏛️ Police Block / District HQ</div>
+      <p style="font-size:14px;font-weight:800;color:var(--t1)" id="modal-dist-name">Central Police District</p>
+      <p style="font-size:12px;color:var(--t2);margin:4px 0" id="modal-dist-addr">Fetching from location…</p>
+      <p style="font-size:12px;font-weight:700;color:var(--sos)" id="modal-dist-phone">—</p>
+      <p style="font-size:11px;color:var(--t3);margin-top:6px">Powered by: <code style="background:rgba(27,79,216,.12);padding:1px 6px;border-radius:5px;font-size:10px">getDistrict(lat, lng)</code></p>
+    </div>
+
+    <div style="background:rgba(229,62,62,.07);border:1.5px solid rgba(229,62,62,.2);border-radius:14px;padding:14px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:900;color:var(--sos);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px">🚨 Emergency Helplines</div>
+      <p style="font-weight:800;color:var(--sos);font-size:15px">Police: 100 &nbsp;|&nbsp; Women: 112 &nbsp;|&nbsp; Ambulance: 108</p>
+    </div>
+
+    <!-- API Integration List -->
+    <div style="background:var(--bg);border:1.5px solid var(--bdr);border-radius:14px;padding:16px">
+      <div style="font-size:11px;font-weight:900;color:var(--t3);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">🔌 Required API Integrations</div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--bdr)">
+          <div style="font-size:12px;font-weight:800;color:var(--t1)">1. Browser Geolocation API</div>
+          <div style="font-size:11px;color:var(--t3);font-weight:600;margin-top:3px">Built-in browser API · No token needed</div>
+          <code style="font-size:10px;background:var(--blue-xl);padding:3px 7px;border-radius:6px;display:inline-block;margin-top:5px;color:var(--blue)">navigator.geolocation.getCurrentPosition()</code>
+        </div>
+
+        <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--bdr)">
+          <div style="font-size:12px;font-weight:800;color:var(--t1)">2. Google Maps / Directions API</div>
+          <div style="font-size:11px;color:var(--t3);font-weight:600;margin-top:3px">Route calculation · Distance · ETA</div>
+          <div style="font-size:11px;color:var(--amber);font-weight:700;margin-top:4px">🔑 Token: Google Cloud Console → Maps → Directions API Key</div>
+          <code style="font-size:10px;background:var(--blue-xl);padding:3px 7px;border-radius:6px;display:inline-block;margin-top:5px;color:var(--blue)">https://maps.googleapis.com/maps/api/directions/json?key=YOUR_KEY</code>
+        </div>
+
+        <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--bdr)">
+          <div style="font-size:12px;font-weight:800;color:var(--t1)">3. Google Places API (Nearby Search)</div>
+          <div style="font-size:11px;color:var(--t3);font-weight:600;margin-top:3px">Find nearest police station · Name · Address · Phone</div>
+          <div style="font-size:11px;color:var(--amber);font-weight:700;margin-top:4px">🔑 Token: Google Cloud Console → Places API Key</div>
+          <code style="font-size:10px;background:var(--blue-xl);padding:3px 7px;border-radius:6px;display:inline-block;margin-top:5px;color:var(--blue)">https://maps.googleapis.com/maps/api/place/nearbysearch/json?type=police&key=YOUR_KEY</code>
+        </div>
+
+        <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--bdr)">
+          <div style="font-size:12px;font-weight:800;color:var(--t1)">4. OpenStreetMap / Overpass API</div>
+          <div style="font-size:11px;color:var(--t3);font-weight:600;margin-top:3px">Free alternative for police station lookup · No token needed</div>
+          <code style="font-size:10px;background:var(--blue-xl);padding:3px 7px;border-radius:6px;display:inline-block;margin-top:5px;color:var(--blue)">https://overpass-api.de/api/interpreter?data=[out:json];node[amenity=police](around:5000,LAT,LNG);out;</code>
+        </div>
+
+        <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--bdr)">
+          <div style="font-size:12px;font-weight:800;color:var(--t1)">5. Nominatim Reverse Geocoding</div>
+          <div style="font-size:11px;color:var(--t3);font-weight:600;margin-top:3px">Convert GPS coords → district/state name · Free, no token</div>
+          <code style="font-size:10px;background:var(--blue-xl);padding:3px 7px;border-radius:6px;display:inline-block;margin-top:5px;color:var(--blue)">https://nominatim.openstreetmap.org/reverse?lat=LAT&lon=LNG&format=json</code>
+        </div>
+
+        <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--bdr)">
+          <div style="font-size:12px;font-weight:800;color:var(--t1)">6. DIAL 112 / Emergency API (India)</div>
+          <div style="font-size:11px;color:var(--t3);font-weight:600;margin-top:3px">Ministry of Home Affairs — official emergency integration</div>
+          <div style="font-size:11px;color:var(--amber);font-weight:700;margin-top:4px">🔑 Token: Apply at dial112.gov.in — Government partnership required</div>
+          <code style="font-size:10px;background:var(--blue-xl);padding:3px 7px;border-radius:6px;display:inline-block;margin-top:5px;color:var(--blue)">POST https://api.dial112.gov.in/v1/alert { lat, lng, userId }</code>
+        </div>
+
+        <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--bdr)">
+          <div style="font-size:12px;font-weight:800;color:var(--t1)">7. SMS Gateway (Twilio / MSG91)</div>
+          <div style="font-size:11px;color:var(--t3);font-weight:600;margin-top:3px">Send SOS SMS alerts to emergency contacts offline</div>
+          <div style="font-size:11px;color:var(--amber);font-weight:700;margin-top:4px">🔑 Token: twilio.com or msg91.com → API Key + Account SID</div>
+          <code style="font-size:10px;background:var(--blue-xl);padding:3px 7px;border-radius:6px;display:inline-block;margin-top:5px;color:var(--blue)">POST https://api.twilio.com/2010-04-01/Accounts/SID/Messages</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-btns" style="margin-top:16px">
+      <button class="btn-secondary" onclick="closeModal('modal-station-info')">Close</button>
+      <button class="btn-primary" onclick="callHelpline('100','Police')">📞 Call Police 100</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  JAVASCRIPT                              ║
+     ╚══════════════════════════════════════════╝ -->
+<script>
+/* ── STATE ── */
+const S = {
+  dark: false,
+  voiceOn: false,
+  voiceLang: 'en-IN',
+  triggerWords: ['help me', 'bachao', 'help'],
+  selectedSound: 'default',
+  contacts: [
+    { id:1, name:'Priya Sharma', phone:'+91 98765 43210', rel:'Family', prim:true  },
+    { id:2, name:'Rahul Verma',  phone:'+91 87654 32109', rel:'Friend', prim:false },
+    { id:3, name:'Mom',          phone:'+91 76543 21098', rel:'Family', prim:false },
+    { id:4, name:'Best Friend',  phone:'+91 65432 10987', rel:'Friend', prim:false },
+  ],
+  sosTimer: null,
+  pressTO: null,
+  sosGuestMode: false,
+  nearestStation: null,  // { name, address, phone, lat, lng, road }
+  currentUser: null,
+};
+const AVC = ['av0','av1','av2','av3','av4'];
+
+/* ══════════════════════════════════
+   AUTH
+══════════════════════════════════ */
+/* ══════════════════════════════════
+   FIREBASE GOOGLE AUTH
+   ─────────────────────────────────
+   FREE SETUP (5 min):
+   1. Go to https://console.firebase.google.com
+   2. Create a project (free Spark plan)
+   3. Go to Authentication → Sign-in method → Enable Google
+   4. Go to Project Settings → copy your firebaseConfig below
+   5. In Authentication → Settings → Authorized domains → add your domain
+      (for local file testing, add "localhost" — or just deploy to Firebase Hosting free)
+══════════════════════════════════ */
+const firebaseConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+
+let firebaseApp = null;
+let firebaseAuth = null;
+
+function initFirebase() {
+  try {
+    if (firebaseConfig.apiKey === 'YOUR_API_KEY') return; // not configured yet
+    firebaseApp  = firebase.initializeApp(firebaseConfig);
+    firebaseAuth = firebase.auth();
+  } catch(e) { console.warn('Firebase init failed:', e); }
+}
+
+function signInWithGoogle() {
+  // Not configured — show setup guide modal
+  if (!firebaseAuth) {
+    showFirebaseSetupModal();
+    return;
+  }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope('email');
+  provider.addScope('profile');
+
+  const btn = document.getElementById('google-login-btn');
+  btn.textContent = '⏳ Signing in…';
+  btn.disabled = true;
+
+  firebaseAuth.signInWithPopup(provider)
+    .then(result => {
+      const user = result.user;
+      afterLogin({
+        name:  user.displayName || user.email,
+        phone: user.phoneNumber || '',
+        photo: user.photoURL
+      });
+      showToast('✅ Signed in as ' + (user.displayName || user.email));
+    })
+    .catch(err => {
+      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.27 9.76A7.08 7.08 0 0112 4.92c1.69 0 3.21.59 4.41 1.56l3.29-3.29A11.8 11.8 0 0012 1C8.24 1 4.96 3.02 3.01 6.08l2.26 3.68z"/><path fill="#34A853" d="M16.04 18.01A7.02 7.02 0 0112 19.08c-2.97 0-5.5-1.83-6.64-4.44L3.1 18.35A11.8 11.8 0 0012 23c3.58 0 6.61-1.35 8.83-3.57l-4.79-1.42z"/><path fill="#4A90D9" d="M20.83 19.43A11.8 11.8 0 0023 12c0-.75-.07-1.49-.21-2.2H12v4.38h6.18a5.25 5.25 0 01-2.32 3.44l4.97 1.81z"/><path fill="#FBBC05" d="M5.36 14.64A7.1 7.1 0 014.92 12c0-.93.17-1.82.44-2.64L3.01 5.68A11.84 11.84 0 001 12c0 1.9.45 3.7 1.25 5.3l3.11-2.66z"/></svg> Login with Google`;
+      btn.disabled = false;
+      if (err.code !== 'auth/popup-closed-by-user') {
+        showToast('❌ Google sign-in failed: ' + err.message);
+      }
+    });
+}
+
+function showFirebaseSetupModal() {
+  const existing = document.getElementById('fb-setup-modal');
+  if (existing) { existing.remove(); return; }
+
+  const m = document.createElement('div');
+  m.id = 'fb-setup-modal';
+  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(10,20,70,.75);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML = `
+    <div style="background:#fff;border-radius:24px;padding:32px 28px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.35);animation:fadeup .3s both">
+      <div style="font-size:40px;text-align:center;margin-bottom:10px">🔥</div>
+      <h2 style="font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:900;color:#0F1F5C;text-align:center;margin-bottom:6px">Set Up Google Login</h2>
+      <p style="font-size:12px;color:#4B5DAA;font-weight:600;line-height:1.65;text-align:center;margin-bottom:20px">
+        Google login needs a free Firebase project. Takes 5 minutes:
+      </p>
+      <div style="background:#F3F6FF;border-radius:14px;padding:16px;font-size:12px;color:#1B3A8A;font-weight:700;line-height:2;margin-bottom:20px">
+        1️⃣ Go to <a href="https://console.firebase.google.com" target="_blank" style="color:#1B4FD8">console.firebase.google.com</a><br>
+        2️⃣ Create a free project (Spark plan)<br>
+        3️⃣ Authentication → Sign-in method → Enable <b>Google</b><br>
+        4️⃣ Project Settings → copy <b>firebaseConfig</b><br>
+        5️⃣ Paste it in the <code style="background:#dde6ff;padding:1px 5px;border-radius:4px">firebaseConfig</code> object in this file<br>
+        6️⃣ Add your domain to <b>Authorized domains</b>
+      </div>
+      <div style="background:#FFF8E1;border:1px solid #FCD34D;border-radius:10px;padding:10px 14px;font-size:11px;color:#92400E;font-weight:700;margin-bottom:16px;line-height:1.6">
+        💡 For local testing, deploy to <b>Firebase Hosting</b> (free) or run a local server.<br>Google OAuth doesn't work on <code>file://</code> URLs.
+      </div>
+      <button onclick="document.getElementById('fb-setup-modal').remove()" style="width:100%;padding:13px;background:#1B4FD8;color:#fff;border:none;border-radius:13px;font-size:14px;font-weight:800;cursor:pointer">Got it</button>
+    </div>`;
+  document.body.appendChild(m);
+  m.onclick = e => { if (e.target === m) m.remove(); };
+}
+async function doLogin() {
+  const phone = document.getElementById('ln-user').value.trim();
+  const pin   = document.getElementById('ln-pass').value.trim();
+
+  if (!phone || !pin) { showToast('⚠️ Enter phone number & PIN'); return; }
+  if (!/^\d{10}$/.test(phone)) { showToast('⚠️ Phone must be 10 digits'); return; }
+  if (!/^\d{4}$/.test(pin))   { showToast('⚠️ PIN must be 4 digits'); return; }
+
+  showToast('⏳ Logging in…');
+  try {
+    const res  = await fetch('/api/auth/signin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone_number: phone, login_pin: pin })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      localStorage.setItem('prahari_token', data.token);
+      localStorage.setItem('prahari_current_user', JSON.stringify(data.user));
+      afterLogin(data.user);
+    } else {
+      showToast('❌ ' + (data.error || 'Login failed'));
+    }
+  } catch(e) {
+    showToast('❌ Server not reachable. Run: python app.py');
+  }
+}
+// function doLogin() {
+//   const phone = document.getElementById('ln-user').value.trim();
+//   const pin   = document.getElementById('ln-pass').value.trim();
+//   if (!phone || !pin) { showToast('⚠️ Enter phone number & PIN'); return; }
+//   const users = JSON.parse(localStorage.getItem('prahari_users') || '[]');
+//   const user  = users.find(u => u.phone === phone && u.pin === pin);
+//   if (user) {
+//     localStorage.setItem('prahari_current_user', JSON.stringify(user));
+//     afterLogin(user);
+//   } else {
+//     /* fallback demo mode: allow any non-empty values */
+//     afterLogin({ name: phone, phone: phone });
+//   }
+// }
+
+// function doRegister() {
+//   const name    = document.getElementById('reg-name').value.trim();
+//   const phone   = document.getElementById('reg-phone').value.trim();
+//   const gender  = document.getElementById('reg-gender').value;
+//   const dob     = document.getElementById('reg-dob').value;
+//   const pincode = document.getElementById('reg-pincode').value.trim();
+//   const abled   = document.getElementById('reg-abled').checked;
+//   const pin     = document.getElementById('reg-pin').value.trim();
+
+//   if (!name)                    { showToast('⚠️ Enter your full name'); return; }
+//   if (!/^\d{10}$/.test(phone))  { showToast('⚠️ Enter a valid 10-digit phone number'); return; }
+//   if (!/^\d{6}$/.test(pincode)) { showToast('⚠️ Area PIN code must be 6 digits'); return; }
+//   if (!/^\d{4}$/.test(pin))     { showToast('⚠️ Login PIN must be exactly 4 digits'); return; }
+
+//   const users = JSON.parse(localStorage.getItem('prahari_users') || '[]');
+//   if (users.find(u => u.phone === phone)) { showToast('❌ Phone already registered'); return; }
+
+//   const newUser = { id: Date.now(), name, phone, gender, dob, pincode, isAbled: abled, pin, createdAt: new Date().toISOString() };
+//   users.push(newUser);
+//   localStorage.setItem('prahari_users', JSON.stringify(users));
+//   localStorage.setItem('prahari_current_user', JSON.stringify(newUser));
+//   showToast('✅ Account created! Welcome, ' + name + '!');
+//   afterLogin(newUser);
+// }
+async function doRegister() {
+  const name    = document.getElementById('reg-name').value.trim();
+  const phone   = document.getElementById('reg-phone').value.trim();
+  const gender  = document.getElementById('reg-gender').value;
+  const dob     = document.getElementById('reg-dob').value;
+  const pincode = document.getElementById('reg-pincode').value.trim();
+  const abled   = document.getElementById('reg-abled').checked;
+  const pin     = document.getElementById('reg-pin').value.trim();
+
+  // Client-side validation first
+  if (!name)                    { showToast('⚠️ Enter your full name'); return; }
+  if (!/^\d{10}$/.test(phone))  { showToast('⚠️ Enter a valid 10-digit phone'); return; }
+  if (!gender)                  { showToast('⚠️ Select your gender'); return; }
+  if (!dob)                     { showToast('⚠️ Enter date of birth'); return; }
+  if (!/^\d{6}$/.test(pincode)) { showToast('⚠️ PIN code must be 6 digits'); return; }
+  if (!/^\d{4}$/.test(pin))     { showToast('⚠️ Login PIN must be exactly 4 digits'); return; }
+
+  showToast('⏳ Creating your account…');
+  try {
+    const res  = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        full_name:         name,
+        phone_number:      phone,
+        gender:            gender,
+        date_of_birth:     dob,
+        area_pin_code:     pincode,
+        is_specially_abled: abled,
+        login_pin:         pin
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      localStorage.setItem('prahari_token', data.token);
+      localStorage.setItem('prahari_current_user', JSON.stringify(data.user));
+      showToast('✅ Account created! Welcome, ' + data.user.full_name + '!');
+      afterLogin(data.user);
+    } else {
+      showToast('❌ ' + (data.error || 'Registration failed'));
+    }
+  } catch(e) {
+    showToast('❌ Server not reachable. Run: python app.py');
+  }
+}
+
+function showRegForm() {
+  document.getElementById('login-card').style.display = 'none';
+  const rc = document.getElementById('reg-card');
+  rc.style.display = 'block';
+  rc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function showLoginForm() {
+  document.getElementById('reg-card').style.display = 'none';
+  document.getElementById('login-card').style.display = 'block';
+}async function afterLogin(user) {
+  document.getElementById('pg-login').style.display = 'none';
+  document.getElementById('pg-app').classList.add('vis');
+
+  // Try to fetch fresh profile from Flask
+  const token = localStorage.getItem('prahari_token');
+  if (token) {
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const profile = await res.json();
+        user = profile;
+        localStorage.setItem('prahari_current_user', JSON.stringify(profile));
+      }
+    } catch(e) { /* use passed user if server unreachable */ }
+  }
+
+  // Update profile display — handle both field naming styles
+  const name  = user.full_name  || user.name  || 'User';
+  const phone = user.phone_number || user.phone || '';
+  document.getElementById('prof-name').textContent  = name;
+  document.getElementById('prof-phone').textContent = phone ? '+91 ' + phone : '';
+  S.currentUser = user;
+
+  // Load contacts from Flask
+  await loadContacts();
+  renderRpCts();
+  updCnt();
+  showToast('✅ Welcome to प्रhari, ' + name + '!');
+  setTimeout(() => {
+    initLeafletMaps();
+    setTimeout(() => {
+      if (homeMap) homeMap.invalidateSize();
+      if (navMap)  navMap.invalidateSize();
+    }, 250);
+  }, 120);
+  setTimeout(() => {
+    if (document.getElementById('tgl-voice')?.checked) vcStart();
+  }, 1500);
+}
+
+// function afterLogin(user) {
+//   document.getElementById('pg-login').style.display = 'none';
+//   document.getElementById('pg-app').classList.add('vis');
+//   if (user.name)  document.getElementById('prof-name').textContent  = user.name;
+//   if (user.phone) document.getElementById('prof-phone').textContent = user.phone;
+//   S.currentUser = user;
+//   renderCts(); renderRpCts(); updCnt();
+//   showToast('✅ Welcome to प्रhari, ' + (user.name || 'User') + '!');
+//   setTimeout(() => {
+//     initLeafletMaps();
+//     setTimeout(() => { if(homeMap) homeMap.invalidateSize(); if(navMap) navMap.invalidateSize(); }, 250);
+//   }, 120);
+//   setTimeout(() => { if (document.getElementById('tgl-voice')?.checked) vcStart(); }, 1500);
+// }
+
+// function doLogout() {
+//   vcStop();
+//   S.currentUser = null;
+//   localStorage.removeItem('prahari_current_user');
+//   document.getElementById('pg-app').classList.remove('vis');
+//   document.getElementById('pg-login').style.display = 'flex';
+//   showLoginForm();
+//   showToast(' Logged out safely');
+// }
+function doLogout() {
+  vcStop();
+  S.currentUser = null;
+  localStorage.removeItem('prahari_token');
+  localStorage.removeItem('prahari_current_user');
+  document.getElementById('pg-app').classList.remove('vis');
+  document.getElementById('pg-login').style.display = 'flex';
+  showLoginForm();
+  showToast('👋 Logged out safely');
+}
+async function loadContacts() {
+  const token = localStorage.getItem('prahari_token');
+  if (!token) return;
+  try {
+    const res = await fetch('/api/contacts', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      // Map Flask field names to frontend format
+      S.contacts = data.map(c => ({
+        id:    c.id,
+        name:  c.name,
+        phone: c.phone,
+        rel:   c.relation,
+        prim:  c.is_primary
+      }));
+      renderCts();
+    }
+  } catch(e) { /* keep existing S.contacts */ }
+}
+
+function callPolice() { window.location.href = 'tel:100'; }
+
+/* ══════════════════════════════════
+   NAVIGATION
+══════════════════════════════════ */
+function goView(n) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('act'));
+  const t = document.getElementById('view-' + n);
+  if (t) t.classList.add('act');
+
+  ['home','navigate','contacts','settings','sos'].forEach(x => {
+    const el = document.getElementById('sl-' + x);
+    if (el) el.classList.toggle('act', x === n);
+  });
+  ['home','navigate','contacts','settings'].forEach(x => {
+    const a = document.getElementById('tnb-' + x);
+    const b = document.getElementById('mn-' + x);
+    if (a) a.classList.toggle('act', x === n);
+    if (b) b.classList.toggle('act', x === n);
+  });
+
+  if (n === 'contacts') renderCts();
+  onViewChange(n);
+  document.getElementById('main-content').scrollTo({ top:0, behavior:'smooth' });
+}
+
+/* ══════════════════════════════════
+   SOS
+══════════════════════════════════ */
+function startPress(e) {
+  if (e) e.preventDefault();
+  document.getElementById('sos-btn').classList.add('pressing');
+  S.pressTO = setTimeout(triggerSOS, 3000);
+}
+function endPress() {
+  clearTimeout(S.pressTO);
+  document.getElementById('sos-btn').classList.remove('pressing');
+}
+
+function triggerSOS() {
+  endPress();
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  // Guard: clear any existing timer before starting a new one
+  if (S.sosTimer) { clearInterval(S.sosTimer); S.sosTimer = null; }
+
+  // Always show SOS view — works with or without login
+  if (!document.getElementById('pg-app').classList.contains('vis')) {
+    // Not logged in: show app shell temporarily for SOS
+    document.getElementById('pg-login').style.display = 'none';
+    document.getElementById('pg-app').classList.add('vis');
+    S.sosGuestMode = true;
+  }
+
+  /* BACKEND: POST /api/sos/trigger { lat, lng, timestamp } */
+  goView('sos');
+  startCountdown();
+}
+
+function startCountdown() {
+  const DURATION = 5;
+  const circ = 2 * Math.PI * 75; // 471
+  let s = DURATION;
+
+  const ne = document.getElementById('cdnum');
+  const rp = document.getElementById('ring-p');
+  const cancelBtn = document.getElementById('btn-cancel');
+
+  if (ne) ne.textContent = s;
+  if (rp) {
+    rp.style.transition = 'none';
+    rp.style.strokeDasharray = circ;
+    rp.style.strokeDashoffset = 0;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (rp) rp.style.transition = 'stroke-dashoffset 0.9s linear';
+      });
+    });
+  }
+  if (cancelBtn) { cancelBtn.style.opacity = '1'; cancelBtn.style.pointerEvents = 'auto'; }
+
+  S.sosTimer = setInterval(() => {
+    s--;
+    if (s < 0) s = 0;
+    if (ne) ne.textContent = s;
+    if (rp) rp.style.strokeDashoffset = circ * (1 - s / DURATION);
+    if (s <= 0) {
+      clearInterval(S.sosTimer);
+      S.sosTimer = null;
+      if (cancelBtn) { cancelBtn.style.opacity = '.35'; cancelBtn.style.pointerEvents = 'none'; }
+      sosFired();
+    }
+  }, 1000);
+}
+
+function sosFired() {
+  showToast('📍 Location & SOS sent to all contacts!');
+  const primary = S.contacts.find(c => c.prim) || S.contacts[0];
+  if (primary) {
+    setTimeout(() => showToast('📞 Calling ' + primary.name + '…'), 1200);
+  }
+  // After countdown completes → navigate to the Navigate page
+  setTimeout(() => {
+    showToast('🚔 Navigating to nearest police station…');
+    goView('navigate');
+    onViewChange('navigate');
+  }, 2000);
+}
+
+function cancelSOS() {
+  if (S.sosTimer) { clearInterval(S.sosTimer); S.sosTimer = null; }
+  const cancelBtn = document.getElementById('btn-cancel');
+  if (cancelBtn) { cancelBtn.style.opacity = '1'; cancelBtn.style.pointerEvents = 'auto'; }
+  showToast('✅ SOS Cancelled');
+  vcResumeListening();
+  // If guest mode (triggered without login), go back to login page
+  if (S.sosGuestMode) {
+    S.sosGuestMode = false;
+    document.getElementById('pg-app').classList.remove('vis');
+    document.getElementById('pg-login').style.display = 'flex';
+  } else {
+    goView('home');
+  }
+}
+
+/* ── call the dynamically fetched station number ── */
+function callNavStation() {
+  const ph = S.nearestStation?.phone || '100';
+  showToast('📞 Calling ' + (S.nearestStation?.name || 'Police Station') + '…');
+  setTimeout(() => { window.location.href = 'tel:' + ph.replace(/\D/g,''); }, 1000);
+}
+
+/* ══════════════════════════════════
+   CONTACTS CRUD
+══════════════════════════════════ */
+function renderCts() {
+  /* BACKEND: GET /api/contacts → array
+     fetch('/api/contacts', { headers:{ Authorization:'Bearer '+localStorage.getItem('prahari_token') } })
+       .then(r=>r.json()).then(d => { S.contacts = d; buildCts(); }); */
+  buildCts();
+}
+
+function buildCts() {
+  const g = document.getElementById('cts-grid');
+  if (!g) return;
+  if (!S.contacts.length) {
+    g.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--t3)"><div style="font-size:40px;margin-bottom:10px">👥</div><p style="font-size:14px;font-weight:700">No contacts yet</p></div>';
+    return;
+  }
+  g.innerHTML = S.contacts.map((c, i) => {
+    const ini = c.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+    return `<div class="ct-card">
+      <div class="ct-av ${AVC[i%5]}">${ini}</div>
+      <div class="ct-info">
+        <div class="ct-name">${c.name} ${c.prim ? '<span class="badge bb" style="font-size:9px">Primary</span>' : ''}</div>
+        <div class="ct-phone">${c.phone}</div>
+        <div class="ct-rel">${c.rel}</div>
+      </div>
+      <div class="ct-acts">
+        <button class="ct-act" onclick="callCt('${c.phone}')">📞</button>
+        <button class="ct-act del" onclick="delCt(${c.id})">❌</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderRpCts() {
+  const el = document.getElementById('rp-cts');
+  if (!el) return;
+  el.innerHTML = S.contacts.slice(0,3).map((c, i) => {
+    const ini = c.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+    return `<div class="rp-ct">
+      <div class="rp-av ${AVC[i%5]}">${ini}</div>
+      <div class="rp-ci">
+        <div class="rp-cn">${c.name} ${c.prim ? '<span class="badge bb" style="font-size:9px">Primary</span>' : ''}</div>
+        <div class="rp-cp">${c.phone}</div>
+      </div>
+      <button class="rp-ca" onclick="callCt('${c.phone}')">📞</button>
+    </div>`;
+  }).join('');
+}
+
+function updCnt() {
+  const e = document.getElementById('sb-cnt');
+  if (e) e.textContent = S.contacts.length;
+}
+
+function openCtModal() {
+  if (S.contacts.length >= 4) { showToast('⚠️ Maximum 4 contacts allowed'); return; }
+  document.getElementById('nc-n').value = '';
+  document.getElementById('nc-p').value = '';
+  openModal('modal-ct');
+}
+
+async function saveContact() {
+  const n  = document.getElementById('nc-n').value.trim();
+  const p  = document.getElementById('nc-p').value.trim();
+  const r  = document.getElementById('nc-r').value;
+  const pm = document.getElementById('nc-pm').value === '1';
+
+  if (!n || !p) { showToast('⚠️ Name & phone required'); return; }
+  if (p.replace(/\D/g,'').length < 10) { showToast('⚠️ Enter a valid phone number'); return; }
+
+  const token = localStorage.getItem('prahari_token');
+  try {
+    const res = await fetch('/api/contacts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ name: n, phone: p, relation: r, is_primary: pm })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      closeModal('modal-ct');
+      await loadContacts(); // Refresh from Flask
+      renderRpCts(); updCnt();
+      showToast('✅ Contact saved!');
+    } else {
+      showToast('❌ ' + (data.error || 'Could not save contact'));
+    }
+  } catch(e) {
+    // Fallback: save locally if server down
+    if (pm) S.contacts.forEach(c => c.prim = false);
+    S.contacts.push({ id: Date.now(), name: n, phone: p, rel: r, prim: pm });
+    closeModal('modal-ct');
+    renderCts(); renderRpCts(); updCnt();
+    showToast('✅ Contact saved (offline)!');
+  }
+}
+
+async function delCt(id) {
+  const token = localStorage.getItem('prahari_token');
+  try {
+    const res = await fetch('/api/contacts/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      S.contacts = S.contacts.filter(c => c.id !== id);
+      renderCts(); renderRpCts(); updCnt();
+      showToast('🗑 Contact removed');
+    } else {
+      showToast('❌ Could not delete contact');
+    }
+  } catch(e) {
+    S.contacts = S.contacts.filter(c => c.id !== id);
+    renderCts(); renderRpCts(); updCnt();
+    showToast('🗑 Contact removed (offline)');
+  }
+}
+
+function callCt(p) { window.location.href = 'tel:' + p.replace(/\s/g,''); }
+
+function callHelpline(n, nm) {
+  showToast('📞 Calling ' + nm + ' — ' + n);
+  /* BACKEND: POST /api/emergency/log { number:n, name:nm } (no auth needed) */
+  setTimeout(() => { window.location.href = 'tel:' + n; }, 1200);
+}
+
+/* ══════════════════════════════════
+   NAVIGATION MAP
+══════════════════════════════════ */
+function startNav() {
+  showToast('🗺 Opening navigation…');
+  const dest = S.nearestStation
+    ? S.nearestStation.lat + ',' + S.nearestStation.lng
+    : '28.6448,77.2167'; // fallback to Delhi HQ
+  setTimeout(() => window.open('https://maps.google.com/?daddr=' + dest, '_blank'), 800);
+}
+
+
+/* ══════════════════════════════════
+   MODAL: CHANGE PIN
+══════════════════════════════════ */
+function openPinModal() {
+  document.getElementById('pin-old').value = '';
+  document.getElementById('pin-new').value = '';
+  document.getElementById('pin-confirm').value = '';
+  document.getElementById('pin-bar').style.width = '0';
+  document.getElementById('pin-lbl').textContent = 'Enter a new PIN';
+  ['pr-len','pr-num','pr-upp','pr-match'].forEach(id => {
+    document.getElementById(id).classList.remove('ok');
+  });
+  openModal('modal-pin');
+}
+
+function checkPinStrength() {
+  const np = document.getElementById('pin-new').value;
+  const cp = document.getElementById('pin-confirm').value;
+
+  const hasLen = np.length >= 6;
+  const hasNum = /\d/.test(np);
+  const hasUpp = /[A-Z]/.test(np);
+  const matches = np && np === cp;
+
+  document.getElementById('pr-len').classList.toggle('ok', hasLen);
+  document.getElementById('pr-num').classList.toggle('ok', hasNum);
+  document.getElementById('pr-upp').classList.toggle('ok', hasUpp);
+  document.getElementById('pr-match').classList.toggle('ok', matches);
+
+  const score = [hasLen, hasNum, hasUpp, np.length >= 10].filter(Boolean).length;
+  const bar = document.getElementById('pin-bar');
+  const lbl = document.getElementById('pin-lbl');
+  const colors = ['', 'var(--sos)', 'var(--amber)', 'var(--blue)', 'var(--green)'];
+  const labels = ['', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+
+  bar.style.width = (score * 25) + '%';
+  bar.style.background = colors[score];
+  lbl.style.color = colors[score] || 'var(--t3)';
+  lbl.textContent = np.length === 0 ? 'Enter a new PIN' : labels[score];
+}
+
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🔒'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+// function savePin() {
+//   const oldP = document.getElementById('pin-old').value.trim();
+//   const newP = document.getElementById('pin-new').value.trim();
+//   const conP = document.getElementById('pin-confirm').value.trim();
+
+//   if (!oldP) { showToast('⚠️ Enter your current PIN'); return; }
+//   if (newP.length < 6) { showToast('⚠️ New PIN must be at least 6 characters'); return; }
+//   if (newP !== conP) { showToast('⚠️ New PINs do not match'); return; }
+
+//   /* BACKEND: PUT /api/auth/pin { old_pin: oldP, new_pin: newP }
+//      fetch('/api/auth/pin', { method:'PUT',
+//        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+//        body: JSON.stringify({ old_pin: oldP, new_pin: newP }) })
+//        .then(r=>r.json()).then(d => {
+//          if(d.success) { closeModal('modal-pin'); showToast('✅ PIN updated!'); }
+//          else showToast('❌ Incorrect current PIN');
+//        }); */
+
+//   closeModal('modal-pin');
+//   showToast('✅ PIN updated successfully!');
+// }
+async function savePin() {
+  const oldP = document.getElementById('pin-old').value.trim();
+  const newP = document.getElementById('pin-new').value.trim();
+  const conP = document.getElementById('pin-confirm').value.trim();
+
+  if (!oldP)           { showToast('⚠️ Enter your current PIN'); return; }
+  if (newP.length < 4) { showToast('⚠️ New PIN must be at least 4 characters'); return; }
+  if (newP !== conP)   { showToast('⚠️ New PINs do not match'); return; }
+
+  const token = localStorage.getItem('prahari_token');
+  try {
+    const res = await fetch('/api/auth/change-pin', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ old_pin: oldP, new_pin: newP })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      closeModal('modal-pin');
+      showToast('✅ PIN updated successfully!');
+    } else {
+      showToast('❌ ' + (data.error || 'Could not update PIN'));
+    }
+  } catch(e) {
+    showToast('❌ Server not reachable');
+  }
+}
+/* ══════════════════════════════════
+   MODAL: NOTIFICATION SETTINGS
+══════════════════════════════════ */
+function openNotifModal() {
+  openModal('modal-notif');
+}
+
+function toggleQuiet() {
+  const checked = document.getElementById('tgl-quiet').checked;
+  document.getElementById('quiet-times').style.display = checked ? 'block' : 'none';
+}
+
+function selectSound(el, id) {
+  document.querySelectorAll('.sound-opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  S.selectedSound = id;
+  previewSound(id);
+}
+
+let _soundCtx = null;
+function previewSound(id) {
+  if (id === 'silent') { showToast('🔕 Silent — no sound'); return; }
+  if (id === 'vibrate') {
+    if (navigator.vibrate) navigator.vibrate([150, 80, 150, 80, 150]);
+    showToast('📳 Vibrating…'); return;
+  }
+  try {
+    if (_soundCtx) { _soundCtx.close(); }
+    _soundCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _soundCtx;
+
+    const patterns = {
+      default: [{f:880,d:.12,g:.7},{f:1100,d:.12,g:.6},{f:880,d:.12,g:.5}],
+      loud:    [{f:440,d:.2,g:1},{f:660,d:.2,g:1},{f:880,d:.2,g:1},{f:660,d:.2,g:.9},{f:440,d:.2,g:.8}],
+      siren:   [{f:440,d:.35,g:.9,slide:880},{f:880,d:.35,g:.9,slide:440},{f:440,d:.35,g:.9,slide:880},{f:880,d:.35,g:.9,slide:440}],
+      chime:   [{f:1047,d:.25,g:.6},{f:1319,d:.25,g:.5},{f:1568,d:.3,g:.6},{f:2093,d:.4,g:.5}]
+    };
+
+    const notes = patterns[id] || patterns.default;
+    let t = ctx.currentTime + 0.05;
+    notes.forEach(n => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = (id === 'siren') ? 'sawtooth' : 'sine';
+      osc.frequency.setValueAtTime(n.f, t);
+      if (n.slide) osc.frequency.linearRampToValueAtTime(n.slide, t + n.d);
+      gain.gain.setValueAtTime(n.g * 0.4, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + n.d + 0.05);
+      osc.start(t); osc.stop(t + n.d + 0.08);
+      t += n.d;
+    });
+    showToast('🔊 Playing preview…');
+  } catch(e) {
+    showToast('⚠️ Audio preview not available');
+  }
+}
+
+function saveNotifSettings() {
+  const quietOn = document.getElementById('tgl-quiet').checked;
+  const quietStart = document.getElementById('quiet-start').value;
+  const quietEnd = document.getElementById('quiet-end').value;
+
+  /* BACKEND: PUT /api/settings/notifications {
+       alert_types: { sos: true, location: true, voice: true, sms: true, email: false },
+       quiet_hours: { enabled: quietOn, start: quietStart, end: quietEnd },
+       sound: S.selectedSound
+     }
+     fetch('/api/settings/notifications', { method:'PUT',
+       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+       body: JSON.stringify({...}) }); */
+
+  closeModal('modal-notif');
+  showToast('✅ Notification settings saved!');
+}
+
+/* ══════════════════════════════════
+   MODAL HELPERS
+══════════════════════════════════ */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id, e) {
+  if (!e || e.target === document.getElementById(id)) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+/* ══════════════════════════════════
+   MOBILE SIDEBAR TOGGLE
+══════════════════════════════════ */
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  if (!sb) return;
+  if (sb.style.display === 'flex') {
+    sb.style.display = ''; sb.style.cssText = '';
+  } else {
+    sb.style.cssText = `
+      display:flex;position:fixed;top:var(--tbh);left:0;
+      height:calc(100dvh - var(--tbh));
+      z-index:120;width:240px;
+      box-shadow:4px 0 30px rgba(27,79,216,.18);
+    `;
+    setTimeout(() => {
+      document.addEventListener('click', function closeSB(e) {
+        if (!sb.contains(e.target) && !document.querySelector('.hamburger').contains(e.target)) {
+          sb.style.cssText = '';
+          document.removeEventListener('click', closeSB);
+        }
+      });
+    }, 100);
+  }
+}
+
+/* ══════════════════════════════════
+   VOICE ASSISTANT (Home)
+══════════════════════════════════ */
+let recognition = null;
+function toggleVoice() {
+  const btn = document.getElementById('voice-btn');
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('⚠️ Voice not supported here'); return;
+  }
+  if (S.voiceOn) {
+    if (recognition) recognition.stop();
+    S.voiceOn = false;
+    if (btn) btn.textContent = '🎙️';
+    showToast('🎙️ Voice assistant off'); return;
+  }
+  /* BACKEND: GET /api/settings/voice → { trigger_words, lang } */
+  startListening();
+}
+
+function startListening() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.lang = S.voiceLang;
+
+  recognition.onstart = () => {
+    S.voiceOn = true;
+    const btn = document.getElementById('voice-btn');
+    if (btn) btn.textContent = '🔴';
+    showToast('🎙 Listening… say "' + S.triggerWords[0] + '"');
+  };
+  recognition.onresult = e => {
+    const t = Array.from(e.results).map(r => r[0].transcript).join(' ').toLowerCase();
+    if (S.triggerWords.some(w => t.includes(w))) {
+      recognition.stop();
+      triggerSOS();
+    }
+  };
+  recognition.onerror = () => {
+    S.voiceOn = false;
+    const btn = document.getElementById('voice-btn');
+    if (btn) btn.textContent = '🎤';
+  };
+  recognition.start();
+}
+
+/* ══════════════════════════════════
+   GEOLOCATION
+══════════════════════════════════ */
+function initGeo() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.watchPosition(
+    pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      const el = document.getElementById('t-loc');
+      if (el) el.textContent = 'GPS ✓';
+      /* BACKEND: POST /api/location/update { lat, lng }
+         fetch('/api/police/nearest?lat='+lat+'&lng='+lng)
+           .then(r=>r.json())
+           .then(d => { document.getElementById('t-ps').textContent = d.distance + ' km'; }); */
+    },
+    err => console.warn('GPS:', err.message),
+    { enableHighAccuracy:true, maximumAge:10000, timeout:8000 }
+  );
+}
+
+/* ══════════════════════════════════
+   THEME
+══════════════════════════════════ */
+function toggleTheme() {
+  S.dark = !S.dark;
+  document.documentElement.setAttribute('data-theme', S.dark ? 'dark' : '');
+  const t = document.getElementById('dark-tog');
+  if (t) t.checked = S.dark;
+  showToast(S.dark ? '🌙 Dark mode on' : '☀️ Light mode on');
+}
+
+/* ══════════════════════════════════
+   OFFLINE
+══════════════════════════════════ */
+function checkOnline() {
+  const bar = document.getElementById('off-bar');
+  const dot = document.getElementById('rp-off');
+  const off = !navigator.onLine;
+  if (bar) bar.classList.toggle('show', off);
+  if (dot) dot.style.display = off ? 'flex' : 'none';
+  if (off) showToast('📴 Offline — SMS fallback active');
+}
+window.addEventListener('online',  checkOnline);
+window.addEventListener('offline', checkOnline);
+
+/* ══════════════════════════════════
+   TOAST
+══════════════════════════════════ */
+let _tt;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ══════════════════════════════════
+   LEAFLET LIVE MAPS
+══════════════════════════════════ */
+let homeMap = null, navMap = null;
+let homeMarker = null, homeCircle = null;
+let navUserMarker = null, navPSMarker = null;
+let mapsZoomed = false;
+
+/* ── Red pin icon (your location) ── */
+const redPinHTML = `
+  <div style="display:flex;flex-direction:column;align-items:center;transform:translateY(-100%)">
+    <div style="
+      width:32px;height:32px;border-radius:50% 50% 50% 0;
+      background:linear-gradient(135deg,#ff4444,#cc0000);
+      transform:rotate(-45deg);
+      box-shadow:0 4px 14px rgba(220,0,0,.45);
+      border:3px solid #fff;
+      display:flex;align-items:center;justify-content:center;
+    ">
+      <span style="transform:rotate(45deg);font-size:14px;line-height:1">📍</span>
+    </div>
+    <div style="
+      margin-top:3px;background:#cc0000;color:#fff;
+      font-size:10px;font-weight:800;padding:2px 8px;
+      border-radius:8px;white-space:nowrap;
+      box-shadow:0 2px 8px rgba(0,0,0,.25);
+    ">You are here</div>
+  </div>`;
+
+function initLeafletMaps() {
+  if (homeMap) return; // already initialized
+  const defaultLat = 26.9124, defaultLng = 75.7873;
+
+  // ── HOME MAP ──────────────────────────────
+  homeMap = L.map('home-map', { zoomControl: true, attributionControl: true })
+    .setView([defaultLat, defaultLng], 14);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(homeMap);
+
+  // ── NAVIGATE MAP ──────────────────────────
+  navMap = L.map('nav-map-leaflet', { zoomControl: true, attributionControl: true })
+    .setView([defaultLat, defaultLng], 14);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(navMap);
+
+  // Icons
+  const youIcon = L.divIcon({
+    html: redPinHTML,
+    className: '',
+    iconSize: [32, 52],
+    iconAnchor: [16, 52]
+  });
+  const psIcon = L.divIcon({
+    html: '<div style="font-size:26px;line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))">🚔</div>',
+    className: '', iconSize: [30, 30], iconAnchor: [15, 30]
+  });
+
+  if (!navigator.geolocation) {
+    showToast('⚠️ Geolocation not supported in this browser');
+    return;
+  }
+
+  // Show full-screen permission modal immediately
+  showLocationModal(youIcon, psIcon);
+}
+
+/* ── Full-screen location permission modal ── */
+function showLocationModal(youIcon, psIcon) {
+  const existing = document.getElementById('loc-permission-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'loc-permission-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(15,31,92,0.72);backdrop-filter:blur(10px);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background:#fff;border-radius:24px;padding:36px 28px;
+      max-width:360px;width:100%;text-align:center;
+      box-shadow:0 24px 64px rgba(0,0,0,.35);
+      animation:fadeup .3s cubic-bezier(.4,0,.2,1) both;
+    ">
+      <div style="font-size:56px;margin-bottom:12px">📍</div>
+      <h2 style="font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:900;color:#0F1F5C;margin-bottom:8px">
+        Allow Location Access
+      </h2>
+      <p style="font-size:13px;color:#4B5DAA;font-weight:600;line-height:1.65;margin-bottom:24px">
+        Prahari needs your <strong>live location</strong> to show you on the map and quickly find the nearest police station in an emergency.
+      </p>
+      <button id="loc-allow-btn" style="
+        width:100%;padding:15px;background:linear-gradient(135deg,#1B4FD8,#1239A6);
+        color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;
+        cursor:pointer;box-shadow:0 6px 20px rgba(27,79,216,.4);margin-bottom:10px;
+        font-family:'Nunito',sans-serif;
+      ">📍 Allow Location</button>
+      <button id="loc-deny-btn" style="
+        width:100%;padding:12px;background:transparent;
+        color:#8899CC;border:1.5px solid #e0e6ff;border-radius:14px;
+        font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;
+      ">Not now</button>
+      <p style="font-size:10px;color:#aab;margin-top:14px;line-height:1.5">
+        🔒 Your location is only used locally and never stored without your consent.
+      </p>
+    </div>`;
+  document.body.appendChild(modal);
+
+  document.getElementById('loc-allow-btn').onclick = () => {
+    modal.remove();
+    requestAndPlaceLocation(youIcon, psIcon);
+  };
+  document.getElementById('loc-deny-btn').onclick = () => {
+    modal.remove();
+    showToast('ℹ️ Location skipped — map shows default view');
+  };
+}
+
+/* ── store icons globally so retry can reuse them ── */
+let _youIcon = null, _psIcon = null;
+let _usingIP = false;
+
+function requestAndPlaceLocation(youIcon, psIcon) {
+  _youIcon = youIcon; _psIcon = psIcon;
+  showToast('📍 Getting your GPS location…');
+  tryGPS();
+}
+
+function tryGPS() {
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      _usingIP = false;
+      removeIPBanner();
+      placeOnMap(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, true, _youIcon, _psIcon, false);
+      showToast('✅ Live GPS location active!');
+      // Keep watching for live updates
+      navigator.geolocation.watchPosition(
+        p => placeOnMap(p.coords.latitude, p.coords.longitude, p.coords.accuracy, false, _youIcon, _psIcon, false),
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+      );
+    },
+    err => {
+      // GPS blocked or unavailable — fall back to IP
+      showToast('📡 GPS unavailable, using network location…');
+      fetchIPLocation();
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+  );
+}
+
+function fetchIPLocation() {
+  fetch('https://ipapi.co/json/')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.latitude || !d.longitude) throw new Error('no coords');
+      _usingIP = true;
+      placeOnMap(d.latitude, d.longitude, 3000, true, _youIcon, _psIcon, true);
+      showIPBanner();
+      showToast('📡 Approximate location (IP-based)');
+    })
+    .catch(() => {
+      showToast('🗺 Could not detect location');
+    });
+}
+
+/* ── Banner shown when using IP location ── */
+function showIPBanner() {
+  removeIPBanner();
+  const el = document.getElementById('home-map');
+  if (!el) return;
+  const b = document.createElement('div');
+  b.id = 'ip-location-banner';
+  b.style.cssText = `
+    position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+    z-index:1000;background:rgba(245,158,11,.95);color:#fff;
+    font-size:11px;font-weight:800;padding:7px 14px;border-radius:20px;
+    display:flex;align-items:center;gap:8px;white-space:nowrap;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;
+  `;
+  b.innerHTML = `
+    📡 Approximate location (IP-based)
+    <span onclick="retryGPS()" style="
+      background:#fff;color:#D97706;border-radius:10px;
+      padding:2px 10px;font-size:10px;font-weight:900;cursor:pointer;
+    ">📍 Use GPS</span>`;
+  el.style.position = 'relative';
+  el.appendChild(b);
+}
+
+function removeIPBanner() {
+  const b = document.getElementById('ip-location-banner');
+  if (b) b.remove();
+}
+
+/* ── "Use GPS" retry button ── */
+function retryGPS() {
+  showToast('📍 Requesting GPS permission…');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      _usingIP = false;
+      removeIPBanner();
+      placeOnMap(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, true, _youIcon, _psIcon, false);
+      showToast('✅ Switched to live GPS!');
+      navigator.geolocation.watchPosition(
+        p => placeOnMap(p.coords.latitude, p.coords.longitude, p.coords.accuracy, false, _youIcon, _psIcon, false),
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+      );
+    },
+    err => {
+      if (err.code === 1) {
+        showToast('❌ GPS blocked — allow location in browser settings');
+        showGPSInstructions();
+      } else {
+        showToast('⚠️ GPS unavailable on this device');
+      }
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+  );
+}
+
+function showGPSInstructions() {
+  const isFile  = location.protocol === 'file:';
+  const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg/.test(navigator.userAgent);
+  const msg = isFile
+    ? '💡 GPS needs a server. Run: python3 -m http.server 8000 → open http://localhost:8000'
+    : (isChrome
+        ? '💡 Click the 🔒 lock in address bar → Site settings → Location → Allow'
+        : '💡 Allow location in your browser settings and reload');
+
+  const m = document.createElement('div');
+  m.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#1B4FD8;color:#fff;font-size:12px;font-weight:700;padding:12px 20px;border-radius:14px;max-width:320px;text-align:center;line-height:1.6;box-shadow:0 8px 24px rgba(27,79,216,.4)';
+  m.textContent = msg;
+  document.body.appendChild(m);
+  setTimeout(() => m.remove(), 6000);
+}
+
+function placeOnMap(lat, lng, acc, zoom, youIcon, psIcon, isIP) {
+  // Store user's current location
+  S._userLat = lat;
+  S._userLng = lng;
+
+  // Fetch nearest police station dynamically (debounced — only on first call or big move)
+  if (!S.nearestStation || haversine(lat, lng, S._lastFetchLat || 0, S._lastFetchLng || 0) > 0.2) {
+    S._lastFetchLat = lat; S._lastFetchLng = lng;
+    fetchNearestStation(lat, lng);
+  }
+
+  // Update badges
+  const badge = document.getElementById('home-gps-badge');
+  if (badge) {
+    badge.textContent = isIP ? '📡 Network location' : '● GPS Active';
+    badge.style.background = isIP ? 'rgba(245,158,11,.12)' : 'rgba(16,185,129,.12)';
+    badge.style.color = isIP ? '#D97706' : '#10B981';
+  }
+  const locEl = document.getElementById('t-loc');
+  if (locEl) locEl.textContent = isIP ? 'Network' : 'GPS ✓';
+
+  // ── HOME MAP ──
+  if (homeMarker) homeMap.removeLayer(homeMarker);
+  if (homeCircle) homeMap.removeLayer(homeCircle);
+
+  homeCircle = L.circle([lat, lng], {
+    radius: Math.min(acc, isIP ? 2000 : 300),
+    color: isIP ? '#F59E0B' : '#E53E3E',
+    fillColor: isIP ? '#F59E0B' : '#E53E3E',
+    fillOpacity: 0.10, weight: 1.5
+  }).addTo(homeMap);
+
+  homeMarker = L.marker([lat, lng], { icon: youIcon }).addTo(homeMap)
+    .bindPopup(
+      '<div style="font-family:Nunito,sans-serif;padding:4px">' +
+      '<b style="color:#0F1F5C;font-size:13px">' + (isIP ? '📡 Approximate location' : '📍 You are here') + '</b><br>' +
+      '<span style="color:#666;font-size:11px">' + lat.toFixed(5) + ', ' + lng.toFixed(5) + '</span><br>' +
+      '<span style="font-size:11px;font-weight:700;color:' + (isIP ? '#D97706' : '#10B981') + '">' +
+      (isIP ? '⚠️ IP-based, not exact' : '±' + Math.round(acc) + 'm accuracy') +
+      '</span>' + (isIP ? '<br><span style="font-size:10px;color:#1B4FD8;cursor:pointer;font-weight:700" onclick="retryGPS()">📍 Switch to GPS →</span>' : '') +
+      '</div>'
+    ).openPopup();
+
+  if (zoom) homeMap.setView([lat, lng], isIP ? 14 : 17);
+  else homeMap.panTo([lat, lng]);
+
+  // ── NAVIGATE MAP ──
+  if (navUserMarker) navMap.removeLayer(navUserMarker);
+  navUserMarker = L.marker([lat, lng], { icon: youIcon }).addTo(navMap)
+    .bindPopup('<b>' + (isIP ? '📡 Approximate Location' : '📍 Your Location') + '</b>').openPopup();
+
+  const psLat = S.nearestStation ? S.nearestStation.lat : lat + 0.012;
+  const psLng = S.nearestStation ? S.nearestStation.lng : lng + 0.008;
+  const psName = S.nearestStation ? S.nearestStation.name : 'Nearest Police Station';
+
+  if (!navPSMarker) {
+    navPSMarker = L.marker([psLat, psLng], { icon: psIcon }).addTo(navMap)
+      .bindPopup('<b>🚔 ' + psName + '</b><br><small>Nearest Station</small>');
+    navMap.fitBounds([[lat, lng], [psLat, psLng]], { padding: [50, 50] });
+  } else {
+    navPSMarker.setLatLng([psLat, psLng]);
+    navMap.panTo([lat, lng]);
+  }
+}
+
+// Invalidate map size when switching to navigate view (map may render in hidden tab)
+function onViewChange(viewId) {
+  if (viewId === 'navigate' && navMap) {
+    setTimeout(() => navMap.invalidateSize(), 120);
+  }
+  if (viewId === 'home' && homeMap) {
+    setTimeout(() => homeMap.invalidateSize(), 120);
+  }
+}
+
+/* ══════════════════════════════════
+   DYNAMIC NEAREST POLICE STATION
+   Uses Overpass API (free, no token)
+   Falls back to Google Places if configured
+══════════════════════════════════ */
+function fetchNearestStation(lat, lng) {
+  // Using Overpass API — free, no token required
+  const query = `[out:json][timeout:10];(node["amenity"="police"](around:8000,${lat},${lng});way["amenity"="police"](around:8000,${lat},${lng}););out center 1;`;
+  const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.elements || !data.elements.length) {
+        setStationFallback(lat, lng);
+        return;
+      }
+      const el = data.elements[0];
+      const psLat = el.lat || el.center?.lat || lat + 0.012;
+      const psLng = el.lon || el.center?.lon || lng + 0.008;
+      const name  = el.tags?.name || el.tags?.['name:en'] || 'Nearest Police Station';
+      const phone = el.tags?.phone || el.tags?.['contact:phone'] || '100';
+      const addr  = el.tags?.['addr:full'] || el.tags?.['addr:street'] || 'Address from GPS';
+
+      // Reverse-geocode the route road using Nominatim
+      const roadUrl = `https://nominatim.openstreetmap.org/reverse?lat=${(lat+psLat)/2}&lon=${(lng+psLng)/2}&format=json&zoom=17`;
+      fetch(roadUrl)
+        .then(r => r.json())
+        .then(geo => {
+          const road = geo?.address?.road || geo?.address?.suburb || geo?.display_name?.split(',')[0] || 'Via nearest road';
+          saveStationInfo({ name, address: addr, phone, lat: psLat, lng: psLng, road });
+        })
+        .catch(() => saveStationInfo({ name, address: addr, phone, lat: psLat, lng: psLng, road: 'Via nearest road' }));
+    })
+    .catch(() => setStationFallback(lat, lng));
+}
+
+function setStationFallback(lat, lng) {
+  // Nominatim reverse geocode for district info
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+    .then(r => r.json())
+    .then(geo => {
+      const dist = geo?.address?.city || geo?.address?.town || geo?.address?.county || 'Local';
+      saveStationInfo({
+        name: dist + ' Police Station',
+        address: geo?.display_name?.split(',').slice(0,3).join(', ') || 'Near your location',
+        phone: '100',
+        lat: lat + 0.012,
+        lng: lng + 0.008,
+        road: geo?.address?.road || 'Via main road'
+      });
+    })
+    .catch(() => saveStationInfo({
+      name: 'Local Police Station',
+      address: 'Near your location',
+      phone: '100',
+      lat: lat + 0.012,
+      lng: lng + 0.008,
+      road: 'Via nearest road'
+    }));
+}
+
+function saveStationInfo(ps) {
+  S.nearestStation = ps;
+
+  // Update navigate view
+  const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+  setEl('nav-ps-name',    ps.name);
+  setEl('nav-ps-address', '📍 ' + ps.address);
+  setEl('nav-ps-road',    ps.road);
+  setEl('nav-ps-phone',   ps.phone);
+
+  // Compute distance & ETA
+  if (S._userLat && S._userLng) {
+    const d = haversine(S._userLat, S._userLng, ps.lat, ps.lng);
+    const km = d < 1 ? (d * 1000).toFixed(0) + ' m' : d.toFixed(1) + ' km';
+    const mins = Math.ceil(d / 0.08); // ~5 km/h walk
+    setEl('nav-ps-dist', km);
+    setEl('nav-ps-time', mins + ' min');
+    const badge = document.getElementById('t-ps');
+    if (badge) badge.textContent = km;
+    const rpSI = document.getElementById('rp-si-ps');
+    if (rpSI) rpSI.textContent = 'Nearest PS: ' + km;
+  }
+
+  // Update police station modal
+  setEl('modal-ps-name',  ps.name);
+  setEl('modal-ps-addr',  ps.address);
+  setEl('modal-ps-phone', '📞 ' + ps.phone);
+
+  // Update nav map marker
+  if (navPSMarker && navMap) {
+    navPSMarker.setLatLng([ps.lat, ps.lng]);
+    navPSMarker.getPopup()?.setContent('<b>🚔 ' + ps.name + '</b><br><small>' + ps.address + '</small>');
+  }
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+/* ══════════════════════════════════
+   INIT
+══════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
+  checkOnline();
+  history.pushState(null, '', location.href);
+  window.addEventListener('popstate', () => history.pushState(null, '', location.href));
+
+  // Restore persisted login session
+  const saved = localStorage.getItem('prahari_current_user');
+  if (saved) {
+    try { afterLogin(JSON.parse(saved)); } catch(e) {}
+  }
+
+  // Sync VC status text
+  S.triggerWords = VC.phrases.slice();
+  const statusEl = document.getElementById('ww-settings-status');
+  if (statusEl) statusEl.innerHTML = VC.phrases.length + ' phrase(s) · <span style="color:var(--green)">Active</span>';
+
+  // Voice auto-start after short delay
+  setTimeout(() => {
+    if (document.getElementById('tgl-voice')?.checked) vcStart();
+  }, 1800);
+});
+</script>
+<!-- ╔══════════════════════════════════════════╗
+     ║  VOICE COMMANDS STATUS PILL              ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="ww-status-pill" onclick="openVoiceCommandsModal()">
+  <div class="ww-dot idle" id="ww-pill-dot"></div>
+  <span id="ww-pill-text">Voice Commands: Off</span>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  MODAL: CUSTOM VOICE COMMANDS            ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="modal-ov" id="modal-wakeword" onclick="closeModal('modal-wakeword',event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:460px">
+    <div class="modal-hdr">
+      <h3>🎙️ Custom Voice Commands</h3>
+      <button class="modal-close" onclick="closeModal('modal-wakeword')">✕</button>
+    </div>
+
+    <div class="vc-info-box">
+      <p>🚨 When the app hears one of your trigger phrases, it <strong>immediately triggers SOS</strong> — sends your live location, alerts all emergency contacts with an SMS, and navigates to the nearest police station.</p>
+    </div>
+
+    <div class="fld">
+      <label>Active Trigger Phrases</label>
+      <div class="vc-phrase-list" id="vc-phrase-list"></div>
+      <div class="vc-add-row">
+        <input type="text" id="vc-new-phrase" placeholder='e.g. "bachao", "help me", "prahari"' maxlength="40">
+        <button class="vc-add-btn" onclick="vcAddPhrase()">+ Add</button>
+      </div>
+      <div class="hint">Max 6 phrases · Hindi &amp; English supported</div>
+    </div>
+
+    <div class="fld">
+      <label>Recognition Language</label>
+      <select id="vc-lang" style="width:100%">
+        <option value="en-IN" selected>English (India)</option>
+        <option value="hi-IN">Hindi (India)</option>
+        <option value="en-US">English (US)</option>
+      </select>
+    </div>
+
+    <button class="vc-test-btn" id="vc-test-btn" onclick="vcTestToggle()">🎙️ Test Voice Recognition</button>
+    <div class="vc-test-result" id="vc-test-result"></div>
+
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('modal-wakeword')">Cancel</button>
+      <button class="btn-primary" onclick="vcSave()">✅ Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════
+   CUSTOM VOICE COMMANDS
+   – Listens continuously when enabled
+   – On phrase match → triggerSOS()
+     (SOS sends location + SMS to all
+      emergency contacts + navigate to PS)
+══════════════════════════════════ */
+
+const VC = {
+  running: false,
+  triggered: false,      // blocks re-trigger after SOS fires, until reset
+  lastResultIndex: 0,    // tracks last processed result index to avoid re-scanning
+  recognition: null,
+  testRec: null,
+  phrases: ['help me', 'bachao', 'help'],
+  lang: 'en-IN',
+};
+
+/* ── pill helper ── */
+function vcUpdatePill(state) {
+  const pill = document.getElementById('ww-status-pill');
+  const dot  = document.getElementById('ww-pill-dot');
+  const txt  = document.getElementById('ww-pill-text');
+  if (!pill) return;
+  pill.classList.toggle('show', VC.running);
+  if (dot) dot.className = 'ww-dot ' + state;
+  if (txt) txt.textContent = VC.running ? '🎙️ Listening…' : 'Voice Commands: Off';
+}
+
+/* ── render phrase chips ── */
+function vcRenderPhrases() {
+  const el = document.getElementById('vc-phrase-list');
+  if (!el) return;
+  if (!VC.phrases.length) {
+    el.innerHTML = '<p style="font-size:12px;color:var(--t3);font-weight:600;text-align:center;padding:8px">No phrases added</p>';
+    return;
+  }
+  el.innerHTML = VC.phrases.map((p, i) => `
+    <div class="vc-phrase-row">
+      <span class="vc-phrase-text">🎤 "${p}"</span>
+      <button class="vc-del-btn" onclick="vcRemovePhrase(${i})" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function vcAddPhrase() {
+  const inp = document.getElementById('vc-new-phrase');
+  const val = inp.value.trim().toLowerCase();
+  if (!val) { showToast('⚠️ Enter a phrase first'); return; }
+  if (VC.phrases.length >= 6) { showToast('⚠️ Max 6 phrases'); return; }
+  if (VC.phrases.includes(val)) { showToast('⚠️ Phrase already added'); return; }
+  VC.phrases.push(val);
+  inp.value = '';
+  vcRenderPhrases();
+  showToast('✅ Phrase added!');
+}
+
+function vcRemovePhrase(i) {
+  VC.phrases.splice(i, 1);
+  vcRenderPhrases();
+}
+
+/* ── open modal ── */
+function openVoiceCommandsModal() {
+  vcRenderPhrases();
+  const langEl = document.getElementById('vc-lang');
+  if (langEl) langEl.value = VC.lang;
+  openModal('modal-wakeword');
+}
+// alias kept for settings row onclick
+function openWakeWordModal() { openVoiceCommandsModal(); }
+
+/* ── save ── */
+function vcSave() {
+  const langEl = document.getElementById('vc-lang');
+  if (langEl) VC.lang = langEl.value;
+  // keep S.triggerWords in sync for legacy startListening()
+  S.triggerWords = VC.phrases.slice();
+  if (!S.triggerWords.length) S.triggerWords = ['help me'];
+  // update settings status text
+  const statusEl = document.getElementById('ww-settings-status');
+  if (statusEl) statusEl.innerHTML = VC.phrases.length + ' phrase(s) · <span style="color:var(--green)">Active</span>';
+  closeModal('modal-wakeword');
+  showToast('✅ Voice commands saved!');
+}
+
+/* ── test recognition ── */
+function vcTestToggle() {
+  const btn = document.getElementById('vc-test-btn');
+  const res = document.getElementById('vc-test-result');
+  if (!("webkitSpeechRecognition" in window) && !('SpeechRecognition' in window)) {
+    showToast('⚠️ Speech recognition not supported in this browser'); return;
+  }
+  if (VC.testRec) {
+    VC.testRec.stop(); VC.testRec = null; return;
+  }
+  const lang = document.getElementById('vc-lang')?.value || VC.lang;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  VC.testRec = new SR();
+  VC.testRec.lang = lang;
+  VC.testRec.continuous = false;
+  VC.testRec.interimResults = true;
+  btn.classList.add('listening');
+  btn.textContent = '🔴 Listening… (tap to stop)';
+  if (res) { res.textContent = 'Waiting for speech…'; res.style.color = 'var(--t3)'; }
+  VC.testRec.onresult = e => {
+    const t = Array.from(e.results).map(r => r[0].transcript).join(' ').toLowerCase();
+    const match = VC.phrases.some(p => t.includes(p));
+    if (res) {
+      res.textContent = `Heard: "${t}" ${match ? '✅ Match! SOS would trigger.' : ''}`;
+      res.style.color = match ? 'var(--green)' : 'var(--t2)';
+    }
+  };
+  VC.testRec.onend = () => {
+    btn.classList.remove('listening');
+    btn.textContent = '🎙️ Test Voice Recognition';
+    VC.testRec = null;
+  };
+  VC.testRec.onerror = e => {
+    if (res) { res.textContent = 'Error: ' + e.error; res.style.color = 'var(--sos)'; }
+    btn.classList.remove('listening');
+    btn.textContent = '🎙️ Test Voice Recognition';
+    VC.testRec = null;
+  };
+  VC.testRec.start();
+}
+
+/* ── always-on listener ── */
+function vcStart() {
+  if (VC.running) return;
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  VC.recognition = new SR();
+  VC.recognition.continuous = true;
+  VC.recognition.interimResults = false;
+  VC.recognition.lang = VC.lang;
+  VC.recognition.onstart = () => {
+    VC.running = true;
+    VC.triggered = false;       // reset on each fresh start
+    VC.lastResultIndex = 0;     // reset result cursor
+    vcUpdatePill('listening');
+  };
+  VC.recognition.onresult = e => {
+    // Only scan NEW results since last check — never re-scan old ones
+    const newResults = Array.from(e.results).slice(VC.lastResultIndex);
+    VC.lastResultIndex = e.results.length;
+
+    // Ignore if already triggered (waiting for SOS page / cancel)
+    if (VC.triggered) return;
+
+    const text = newResults.map(r => r[0].transcript).join(' ').toLowerCase();
+    if (VC.phrases.some(p => text.includes(p))) {
+      VC.triggered = true;      // lock: no more triggers until vcStart() resets this
+      showToast('🚨 Voice trigger detected! Starting SOS…');
+      vcUpdatePill('triggered');
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      setTimeout(() => triggerSOS(), 400);
+    }
+  };
+  VC.recognition.onerror = e => {
+    if (e.error !== 'aborted' && e.error !== 'no-speech') {
+      VC.running = false;
+      vcUpdatePill('idle');
+      setTimeout(() => { if (document.getElementById('tgl-voice')?.checked) vcStart(); }, 3000);
+    }
+  };
+  VC.recognition.onend = () => {
+    if (VC.running && document.getElementById('tgl-voice')?.checked) {
+      // Restart only if not in triggered/SOS state
+      if (!VC.triggered) {
+        VC.lastResultIndex = 0;   // fresh session — reset cursor
+        setTimeout(() => { try { VC.recognition.start(); } catch(e) {} }, 300);
+      } else {
+        // Stay "running" but silent — vcResumeListening() will restart after cancel
+        VC.running = false;
+        vcUpdatePill('triggered');
+      }
+    } else {
+      VC.running = false;
+      vcUpdatePill('idle');
+    }
+  };
+  try { VC.recognition.start(); } catch(e) {}
+}
+
+function vcStop() {
+  VC.running = false;
+  VC.triggered = false;
+  VC.lastResultIndex = 0;
+  if (VC.recognition) { try { VC.recognition.stop(); } catch(e) {} VC.recognition = null; }
+  vcUpdatePill('idle');
+  showToast('🔇 Voice commands off');
+}
+
+/* ── called after SOS is cancelled — resumes clean listening ── */
+function vcResumeListening() {
+  VC.triggered = false;
+  VC.lastResultIndex = 0;
+  VC.running = false;
+  if (VC.recognition) { try { VC.recognition.stop(); } catch(e) {} VC.recognition = null; }
+  if (document.getElementById('tgl-voice')?.checked) {
+    setTimeout(() => vcStart(), 400);   // short delay so recognition fully tears down
+  } else {
+    vcUpdatePill('idle');
+  }
+}
+
+/* ── voice toggle in Settings ── */
+function onVoiceToggle() {
+  const checked = document.getElementById('tgl-voice').checked;
+  const statusEl = document.getElementById('voice-status-txt');
+  if (statusEl) statusEl.textContent = checked ? VC.phrases.length + ' phrase(s) set' : 'Voice activation disabled';
+  showToast(checked ? '🔊 Voice commands on' : '🔇 Voice commands off');
+  if (checked) vcStart(); else vcStop();
+}
+
+/* ── location toggle in Settings ── */
+function onLocationToggle() {
+  const checked = document.getElementById('tgl-location').checked;
+  const statusEl = document.getElementById('location-status-txt');
+  if (checked) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          if (statusEl) statusEl.textContent = 'GPS active · sharing enabled';
+          showToast('📍 Location sharing enabled');
+        },
+        () => {
+          if (statusEl) statusEl.textContent = 'Location permission denied';
+          document.getElementById('tgl-location').checked = false;
+          showToast('⚠️ Location permission denied');
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    } else {
+      if (statusEl) statusEl.textContent = 'GPS not supported on device';
+      document.getElementById('tgl-location').checked = false;
+      showToast('⚠️ Geolocation not supported');
+    }
+  } else {
+    if (statusEl) statusEl.textContent = 'Location sharing disabled';
+    showToast('📍 Location sharing off');
+  }
+}
+
+/* ── VC init is handled by the main DOMContentLoaded above ── */
+</script>
+</body>
+</html>
