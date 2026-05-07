@@ -675,10 +675,25 @@ background: linear-gradient(to left, #4A569D, #DC2424); /* W3C, IE 10+/ Edge, Fi
               onkeydown="if(event.key==='Enter') doRegister()">
           </div>
         </div>
+          <div class="fgrp">
+          <label>Primary Contact Name</label>
+          <div class="fw"><span class="ic"></span>
+            <input type="text" id="primary-contact-name" placeholder="Enter primary contact name" maxlength="100"
+              onkeydown="if(event.key==='Enter') doRegister()">
+          </div>
+        </div>
+        <div class="fgrp">
+          <label>Primary Contact</label>
+          <div class="fw"><span class="ic"></span>
+            <input type="text" id="primary-contact" placeholder="Enter primary contact number" maxlength="10"
+              onkeydown="if(event.key==='Enter') doRegister()">
+          </div>
+        </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
           <input type="checkbox" id="reg-abled" style="width:18px;height:18px;cursor:pointer;accent-color:var(--blue)">
           <label for="reg-abled" style="font-size:12px;font-weight:700;color:rgba(255,255,255,.75);cursor:pointer">I am specially abled</label>
         </div>
+         
         <div class="fgrp">
           <label>Set 4-digit Login PIN</label>
           <div class="fw"><span class="ic"></span>
@@ -1453,11 +1468,7 @@ const S = {
   triggerWords: ['help me', 'bachao', 'help'],
   selectedSound: 'default',
   contacts: [
-    { id:1, name:'Priya Sharma', phone:'+91 98765 43210', rel:'Family', prim:true  },
-    { id:2, name:'Rahul Verma',  phone:'+91 87654 32109', rel:'Friend', prim:false },
-    { id:3, name:'Mom',          phone:'+91 76543 21098', rel:'Family', prim:false },
-    { id:4, name:'Best Friend',  phone:'+91 65432 10987', rel:'Friend', prim:false },
-  ],
+    ],
   sosTimer: null,
   pressTO: null,
   sosGuestMode: false,
@@ -1638,6 +1649,8 @@ async function doRegister() {
   const pincode = document.getElementById('reg-pincode').value.trim();
   const abled   = document.getElementById('reg-abled').checked;
   const pin     = document.getElementById('reg-pin').value.trim();
+  const primary = document.getElementById('reg-primary').checked;
+  const primaryCt = document.getElementById('reg-primary-ct').value.trim();
 
   // Client-side validation first
   if (!name)                    { showToast('⚠️ Enter your full name'); return; }
@@ -1646,7 +1659,9 @@ async function doRegister() {
   if (!dob)                     { showToast('⚠️ Enter date of birth'); return; }
   if (!/^\d{6}$/.test(pincode)) { showToast('⚠️ PIN code must be 6 digits'); return; }
   if (!/^\d{4}$/.test(pin))     { showToast('⚠️ Login PIN must be exactly 4 digits'); return; }
-
+  if (!primary)                { showToast('⚠️ Enter primary contact name'); return; }
+  if (!/^\d{10}$/.test(primaryCt)) { showToast('⚠️ Primary contact must be a valid 10-digit number'); return; }
+  
   showToast('⏳ Creating your account…');
   try {
     const res  = await fetch('/api/auth/signup', {
@@ -1659,7 +1674,9 @@ async function doRegister() {
         date_of_birth:     dob,
         area_pin_code:     pincode,
         is_specially_abled: abled,
-        login_pin:         pin
+        login_pin:         pin,
+        primary: primary,
+        primaryCt: primaryCt
       })
     });
     const data = await res.json();
