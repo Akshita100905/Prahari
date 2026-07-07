@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
-import mysql.connector
+
+import pymysql
+import pymysql.cursors
 import requests as http_requests
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import (
@@ -10,6 +12,7 @@ from flask_cors import CORS
 from config import Config
 from models import get_user_by_phone, get_user_by_id, create_user, update_user_pin
 import re
+
  
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -26,17 +29,19 @@ class MySQL:
         self.app = app
 
     def connect(self):
-        if self.connection is None or not self.connection.is_connected():
-            self.connection = mysql.connector.connect(
+        if self.connection is None:
+            self.connection = pymysql.connect(
                 host=self.app.config["MYSQL_HOST"],
                 user=self.app.config["MYSQL_USER"],
                 password=self.app.config["MYSQL_PASSWORD"],
                 database=self.app.config["MYSQL_DB"],
+                port=14550, # Force connection to your exact Aiven port
+                cursorclass=pymysql.cursors.DictCursor # Native dictionary cursor support
             )
         return self.connection
 
     def cursor(self):
-        return self.connect().cursor(dictionary=True)
+        return self.connect().cursor()
 
     def commit(self):
         return self.connect().commit()
