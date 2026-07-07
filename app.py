@@ -119,7 +119,7 @@ def signup():
         }
     }), 201
  
- 
+if not bcrypt.check_password_hash(user["login_pin"], pin):
 @app.route("/api/auth/signin", methods=["POST"])
 def signin():
     data  = request.get_json()
@@ -257,7 +257,53 @@ def get_contacts():
     #     f"This is an SOS emergency alert. "
     #     f"- Team Prahari"
    # )
+@app.route("/api/contacts", methods=["POST"])
+@jwt_required()
+def add_contact():
+    user_id = get_jwt_identity()
+    data    = request.get_json()
 
+    if not data or not data.get("name") or not data.get("phone"):
+        return jsonify({"error": "Name and phone required"}), 400
+
+    cur = db.cursor()
+    cur.execute("SELECT COUNT(*) as cnt FROM contacts WHERE user_id = %s", (user_id,))
+    if cur.fetchone()["cnt"] >= 4:
+        cur.close()
+        return jsonify({"error": "Maximum 4 contacts allowed"}), 400
+
+    if data.get("is_primary"):
+        cur.execute("UPDATE contacts SET is_primary = FALSE WHERE user_id = %s", (user_id,))
+
+    cur.execute("""
+        INSERT INTO contacts (user_id, name, phone, relation, is_primary)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (user_id, data["name"], data["phone"],
+          data.get("relation", "Other"), data.get("is_primary", False)))
+    db.commit()
+    new_id = cur.lastrowid
+
+    cur.execute("SELECT full_name FROM users WHERE id = %s", (user_id,))
+    user = cur.fetchone()
+    cur.close()
+
+    user_name = user["full_name"] if user else "Someone"
+    clean_ph = data["phone"].replace("+91","").replace(" ","").replace("-","").strip()
+
+    message = (
+        f"Hi {data['name']}! "
+        f"{user_name} has added you as an emergency contact in the Prahari Safety App. "
+        f"This is an SOS emergency alert. - Team Prahari"
+    )
+
+sms = send_fast2sms([clean_ph], message)
+
+    return jsonify({
+        "message": "Contact saved!",
+        "id":      new_id,
+        "sms_sent": sms["success"],
+        "sms_info": sms.get("error", "SMS delivered!")
+    }), 201
     # ── Send SMS using your function ─────────────
     sms = send_fast2sms([clean_phone], message)
 

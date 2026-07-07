@@ -1,3 +1,20 @@
+# 1. Setup Database (Log into your MySQL Server shell)
+mysql -u root -p
+# Enter your password (Nid2345@hi)
+CREATE DATABASE prahari_db;
+USE prahari_db;
+# Copy-paste the blocks inside your schema.sql file here to build your tables
+
+# 2. Spin up a localized environment
+python -m venv venv
+source venv/bin/activate  # Or use: venv\Scripts\activate on Windows
+
+# 3. Install strict pinning requirements
+pip install -r requirements.txt
+
+# 4. Fire up the backend engine
+python app.py
+
 Flask==3.0.0
 Flask-Bcrypt==1.0.1
 Flask-JWT-Extended==4.6.0
