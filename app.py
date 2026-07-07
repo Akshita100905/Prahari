@@ -300,21 +300,11 @@ def add_contact():
 sms = send_fast2sms([clean_ph], message)
 
     return jsonify({
-        "message": "Contact saved!",
-        "id":      new_id,
-        "sms_sent": sms["success"],
-        "sms_info": sms.get("error", "SMS delivered!")
+        "message":   "Contact saved!",
+        "id":         new_id,
+        "sms_sent":  sms["success"],
+        "sms_info":  sms.get("error", "SMS delivered!")
     }), 201
-    # ── Send SMS using your function ─────────────
-    sms = send_fast2sms([clean_phone], message)
-
-    return jsonify({
-        "message": "Contact saved!",
-        "id":      new_id,
-        "sms_sent": sms["success"],
-        "sms_info": sms.get("error", "SMS delivered!")
-    }), 201
- 
   
  
  
