@@ -1,10 +1,10 @@
-
+import os
 class Config:
     SECRET_KEY        = "prahari-secret-key-2024"
-    MYSQL_HOST        = "localhost"
-    MYSQL_USER        = "root"
-    MYSQL_PASSWORD    = "Nid2345@hi"
-    MYSQL_DB          = "prahari_db"
+    MYSQL_HOST        = "prahari-prahariv5.e.aivencloud.com"
+    MYSQL_USER        = "avnadmin"
+    MYSQL_PASSWORD    = "AVNS_aPpI0KOkZycEyEVh6t-"
+    MYSQL_DB          = "defaultdb"
     MYSQL_CURSORCLASS = "DictCursor"
     JWT_SECRET_KEY           = "prahari-jwt-secret-2024"
     JWT_ACCESS_TOKEN_EXPIRES = 86400           # 24 hours
