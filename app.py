@@ -262,7 +262,7 @@ def get_contacts():
 @jwt_required()
 def add_contact():
     user_id = get_jwt_identity()
-    data    = request.get_json()
+    data = request.get_json()
 
     if not data or not data.get("name") or not data.get("phone"):
         return jsonify({"error": "Name and phone required"}), 400
@@ -297,16 +297,14 @@ def add_contact():
         f"This is an SOS emergency alert. - Team Prahari"
     )
 
-sms = send_fast2sms([clean_ph], message)
+    sms = send_fast2sms([clean_ph], message)
 
     return jsonify({
-        "message":   "Contact saved!",
-        "id":         new_id,
-        "sms_sent":  sms["success"],
-        "sms_info":  sms.get("error", "SMS delivered!")
+        "message": "Contact saved!",
+        "id": new_id,
+        "sms_sent": sms["success"],
+        "sms_info": sms.get("error", "SMS delivered!")
     }), 201
-  
- 
  
 @app.route("/api/contacts/<int:contact_id>", methods=["DELETE"])
 @jwt_required()
