@@ -120,7 +120,7 @@ def signup():
     }), 201
  
 if not bcrypt.check_password_hash(user["login_pin"], pin):
-@app.route("/api/auth/signin", methods=["POST"])
+    @app.route("/api/auth/signin", methods=["POST"])
 def signin():
     data  = request.get_json()
     if not data:
