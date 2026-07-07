@@ -1,18 +1,17 @@
 def get_user_by_phone(cursor, phone):
-    cursor.execute("SELECT * FROM users WHERE phone_number = %s", (phone,))
+    cursor.execute("SELECT * FROM users WHERE phone_number = %s", (str(phone),))
     return cursor.fetchone()
  
-
 def get_user_by_id(cursor, user_id):
     cursor.execute(
         "SELECT id, full_name, phone_number, gender, "
         "date_of_birth, area_pin_code, "
         "is_specially_abled, created_at "
         "FROM users WHERE id = %s",
-        (user_id,)
+        (int(user_id),)
     )
     return cursor.fetchone()
-
+ 
 def create_user(cursor, data, hashed_pin):
     cursor.execute("""
         INSERT INTO users
@@ -20,18 +19,18 @@ def create_user(cursor, data, hashed_pin):
              area_pin_code, is_specially_abled, login_pin)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
     """, (
-        data["full_name"],
-        data["phone_number"],
-        data["gender"],
-        data["date_of_birth"],
-        data["area_pin_code"],
-        data.get("is_specially_abled", False),
-        hashed_pin
+        str(data["full_name"]),
+        str(data["phone_number"]),
+        str(data["gender"]),
+        str(data["date_of_birth"]),
+        str(data["area_pin_code"]),
+        bool(data.get("is_specially_abled", False)),
+        str(hashed_pin)
     ))
     return cursor.lastrowid
-
+ 
 def update_user_pin(cursor, user_id, new_hashed_pin):
     cursor.execute(
         "UPDATE users SET login_pin = %s WHERE id = %s",
-        (new_hashed_pin, user_id)
+        (str(new_hashed_pin), int(user_id))
     )
