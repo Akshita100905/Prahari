@@ -119,29 +119,29 @@ def signup():
         }
     }), 201
  
-if not bcrypt.check_password_hash(user["login_pin"], pin):
-    @app.route("/api/auth/signin", methods=["POST"])
+@app.route("/api/auth/signin", methods=["POST"])
 def signin():
     data  = request.get_json()
     if not data:
         return jsonify({"error": "No data received"}), 400
- 
+
     phone = data.get("phone_number", "").strip()
     pin   = str(data.get("login_pin", "")).strip()
- 
+
     if not phone or not pin:
         return jsonify({"error": "Phone number and PIN are required"}), 400
- 
+
     cur  = db.cursor()
     user = get_user_by_phone(cur, phone)
     cur.close()
- 
+
     if not user:
         return jsonify({"error": "No account found with this phone number"}), 404
- 
-    if not bcrypt.check_password_hash(user["pin_hash"], pin):
+
+   
+    if not bcrypt.check_password_hash(user["login_pin"], pin):
         return jsonify({"error": "Incorrect PIN. Try again."}), 401
- 
+
     token = create_access_token(identity=str(user["id"]))
     return jsonify({
         "message": "Login successful!",
@@ -151,7 +151,8 @@ def signin():
             "full_name":          user["full_name"],
             "phone_number":       user["phone_number"],
             "gender":             user["gender"],
-            "is_specially_abled": bool(user.get("is_abled", False))
+            
+            "is_specially_abled": bool(user.get("is_specially_abled", False))
         }
     }), 200
  
