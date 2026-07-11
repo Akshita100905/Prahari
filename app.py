@@ -12,7 +12,8 @@ from flask_cors import CORS
 from config import Config
 from models import get_user_by_phone, get_user_by_id, create_user, update_user_pin
 import re
-
+import firebase_admin
+from firebase_admin import credentials, auth
  
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -172,7 +173,59 @@ def get_me():
     if not user:
         return jsonify({"error": "User not found"}), 404
     return jsonify(user), 200
- 
+@app.route("/api/auth/google", methods=["POST"])
+def google_signin():
+    data = request.get_json()
+    id_token = data.get("idToken")
+    
+    if not id_token:
+        return jsonify({"error": "Missing identity verification token"}), 400
+        
+    try:
+        # 1. Verify the token securely with Google's servers
+        decoded_token = auth.verify_id_token(id_token)
+        phone_number = decoded_token.get("phone_number", "") # Optional, depends on Google Profile
+        full_name    = decoded_token.get("name", "Google User")
+        email        = decoded_token.get("email", "")
+        
+        # We will use the Google unique email prefix or unique UID to manage accounts safely
+        lookup_identifier = email if email else decoded_token["uid"]
+        
+        cur = db.cursor()
+        # 2. Check if this cloud user profile already exists in our Aiven database
+        cur.execute("SELECT * FROM users WHERE phone_number = %s", (lookup_identifier,))
+        user = cur.fetchone()
+        
+        if not user:
+            # 3. Create a placeholder profile if they are logging in for the first time
+            cur.execute("""
+                INSERT INTO users (full_name, phone_number, gender, date_of_birth, area_pin_code, login_pin)
+                VALUES (%s, %s, 'Other', '2000-01-01', '000000', 'OAUTH_ACCOUNT')
+            """, (full_name, lookup_identifier))
+            db.commit()
+            
+            cur.execute("SELECT * FROM users WHERE phone_number = %s", (lookup_identifier,))
+            user = cur.fetchone()
+            
+        cur.close()
+        
+        # 4. Generate your standard local app JWT access token
+        token = create_access_token(identity=str(user["id"]))
+        
+        return jsonify({
+            "message": "Google Login successful!",
+            "token":   token,
+            "user": {
+                "id":                 user["id"],
+                "full_name":          user["full_name"],
+                "phone_number":       user["phone_number"],
+                "gender":             user["gender"],
+                "is_specially_abled": bool(user.get("is_specially_abled", False))
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": f"Authentication failed: {str(e)}"}), 401
  
 @app.route("/api/auth/change-pin", methods=["PUT"])
 @jwt_required()

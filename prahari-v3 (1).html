@@ -1481,20 +1481,22 @@ const AVC = ['av0','av1','av2','av3','av4'];
       (for local file testing, add "localhost" — or just deploy to Firebase Hosting free)
 ══════════════════════════════════ */
 const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyDmFf8Z69YN1BSUn7NqPlSFSc8-xXsbGOQ",
+  authDomain:        "prahari-578ac.firebaseapp.com",
+  projectId:         "prahari-578ac",
+  storageBucket:     "Yprahari-578ac.firebasestorage.app",
+  messagingSenderId: "174856547456",
+  appId:             "1:174856547456:web:4b05811f2a2efa87c08a65",
+  measurementId: "G-EBPWYPYK15"
 };
-
+//const firebaseApp = initializeApp(firebaseConfig);
+//const analytics = getAnalytics(app);
 let firebaseApp = null;
 let firebaseAuth = null;
 
 function initFirebase() {
   try {
-    if (firebaseConfig.apiKey === 'YOUR_API_KEY') return; // not configured yet
+    if (firebaseConfig.apiKey === 'AIzaSyDmFf8Z69YN1BSUn7NqPlSFSc8-xXsbGOQ') return; // not configured yet
     firebaseApp  = firebase.initializeApp(firebaseConfig);
     firebaseAuth = firebase.auth();
   } catch(e) { console.warn('Firebase init failed:', e); }
